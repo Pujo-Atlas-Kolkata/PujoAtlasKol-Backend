@@ -1,3 +1,6 @@
+# VENV
+venv/*
+
 # Gradle files
 .gradle/
 build/
