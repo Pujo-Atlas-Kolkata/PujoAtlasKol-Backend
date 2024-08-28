@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import PujoListView
+from . import views
 
 urlpatterns = [
-    path('list/', PujoListView.as_view(), name='pujo-list'),
+    path('list/', views.getPujoList),
 ]
