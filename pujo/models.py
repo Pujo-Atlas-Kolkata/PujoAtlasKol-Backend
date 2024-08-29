@@ -9,10 +9,8 @@ class Pujo(models.Model):
     city = models.TextField()
     zone = models.CharField(max_length=100)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    # TODO Images of the particular pandal
-
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(null = True)
 
     def __str__(self):
         return self.name
