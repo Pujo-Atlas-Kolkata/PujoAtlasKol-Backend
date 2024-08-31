@@ -1,10 +1,23 @@
 from django.urls import path
-from . import views
+from .views import PujoViewSet
+
+# Define custom views for list and detail actions
+pujo_list = PujoViewSet.as_view({
+    'get': 'list',    # List action
+})
+
+pujo_create = PujoViewSet.as_view({
+    'post': 'create'  # Create action
+})
+
+pujo_detail = PujoViewSet.as_view({
+    'get': 'retrieve',    # Retrieve action
+    'put': 'update',      # Update action
+    'delete': 'destroy'   # Delete action
+})
 
 urlpatterns = [
-    path('list/', views.getPujoList),
-    path('<uuid:pk>/', views.getPujoDetail),
-    path('create/', views.addNewPujo),
-    path('update/<uuid:pk>/',views.updatePujoDetails),
-    path('delete/<uuid:pk>/',views.DeletePujo),
+    path('list/', pujo_list, name='pujo-list'),  # URL for listing Pujos
+    path('', pujo_create, name='pujo-create'),  # URL for creating a new Pujo
+    path('<uuid:uuid>/', pujo_detail, name='pujo-detail'),  # URL for detail, update, and delete
 ]
