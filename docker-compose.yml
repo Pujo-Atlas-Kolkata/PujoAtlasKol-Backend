@@ -1,6 +1,10 @@
 version: '3.8'
 
 services:
+  my-postgres:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: mypassword
   web:
     build: .
     ports:
@@ -9,3 +13,6 @@ services:
       - .:/app
     environment:
       - PYTHONUNBUFFERED=1
+    depends_on:
+      - my-postgres
+
