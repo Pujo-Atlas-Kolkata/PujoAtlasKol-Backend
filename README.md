@@ -27,7 +27,7 @@ cd PujoAtlasKol-Backend
 To build and run the application using Docker Compose, use the following command:
 
 ```bash
-docker-compose up --build
+docker-compose up --build #but this will delete any data in database
 ```
 
 If you want to run it in background
