@@ -1,6 +1,6 @@
 asgiref==3.8.1
 diff-match-patch==20230430
-Django==5.1-rc1
+Django==5.0
 django-filter==24.3
 django-import-export==4.1.1
 django-jazzmin==3.0.0
@@ -9,3 +9,4 @@ Markdown==3.7
 sqlparse==0.5.1
 tablib==3.5.0
 typing_extensions==4.12.2
+psycopg2-binary>=2.9,<3.0
