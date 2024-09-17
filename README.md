@@ -1,65 +1,64 @@
-# Django Docker Project
 
-This project is a basic Django application containerized using Docker. It is set up to run locally with Docker Compose, making it easy to get started and collaborate.
 
-## Prerequisites
 
-Before you begin, ensure you have the following installed:
+# PujoAtlasKol-Backend
 
-- [Git](https://git-scm.com/downloads)
-- [Docker](https://www.docker.com/get-started)
-- [Docker Compose](https://docs.docker.com/compose/install/)
+# Running a Python Project After Forking
 
-## Getting Started
+Follow these steps to set up and run your Python project:
 
-Follow these steps to get the application up and running:
+## 1. Clone the Repository
 
-### 1. Clone the Repository
-
-First, clone the repository from GitHub:
+First, clone the repository from GitHub (or another source control system):
 
 ```bash
-git clone https://github.com/Pujo-Atlas-Kolkata/PujoAtlasKol-Backend.git
-cd PujoAtlasKol-Backend
+git clone https://github.com/your-username/your-repository.git
 ```
-### 2. Build and Run the Docker Containers
 
-To build and run the application using Docker Compose, use the following command:
+## 2. Navigate to the Project Directory
+
+Change to the project directory:
 
 ```bash
-docker-compose up --build #but this will delete any data in database
+cd your-repository
 ```
 
-If you want to run it in background
+## 3. Create a Virtual Environment
 
 ```bash
-docker-compose up -d --build
+python -m venv venv
 ```
-This command will build the Docker images if they are not already built and start the Django application in a Docker container.
 
-### 3. Access the Application
+## 4. Activate the Virtual Environment
 
-Once the containers are up and running, you can access the Django application in your web browser at:
+on windows:
 
 ```bash
-http://localhost:8000
+venv\Scripts\activate
 ```
 
-### 4. Stopping the Application
-To stop the Docker containers, press Ctrl + C in the terminal where docker-compose up is running. Alternatively, you can run:
+on linux/mac
 
 ```bash
-docker-compose down
+source venv/bin/activate
 ```
 
-### 5. Executing commands
-If you want to have access to database run the following:
+## 5. Install requirements
+
 ```bash
-docker-compose exec my-postgres psql -U postgres -d postgres
+pip install -r requirements.txt
 ```
-If you want to migrate data then use:
+
+## 6. Run Migrations (if applicable)
+
+If your project uses a database and requires migrations, apply them:
+
 ```bash
-docker-compose run web python manage.py migrate
+python manage.py migrate
 ```
 
+## 7. Run Server
 
+```bash
+python manage.py runserver
+```
