@@ -1,8 +1,9 @@
 from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.db.models import Q
+from django.db.models import Q, F
 from .models import Pujo
-from .serializers import PujoSerializer
+from .serializers import PujoSerializer, TrendingPujoSerializer
 from core.ResponseStatus import ResponseStatus
 import logging
 
@@ -16,18 +17,46 @@ class PujoViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         try:
             queryset = self.get_queryset()
+            search_params = request.query_params
 
-            # Check for 'q' parameter in the query string
-            search_query = request.query_params.get('q', '').strip()
+            # Check if query parameters are provided
+            if not search_params:
+                # If no parameters are provided, return all records
+                serializer = self.get_serializer(queryset, many=True)
+                response_data = {
+                    'result': serializer.data,
+                    'status': ResponseStatus.SUCCESS.value
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
 
-            if search_query:
-                queryset = queryset.filter(
-                    Q(address__icontains=search_query) |
-                    Q(name__icontains=search_query) |
-                    Q(city__icontains=search_query) |
-                    Q(zone__icontains=search_query)
-                )
+            # Initialize a flag to track if any valid parameters were found
+            valid_query_found = False
 
+            # Check for valid query parameters
+            if 'name' in search_params:
+                queryset = queryset.filter(name__icontains=search_params.get('name').strip())
+                valid_query_found = True
+                # Increment searchScore only for name searches
+                queryset.update(searchScore=F('searchScore') + 1)
+            elif 'address' in search_params:
+                queryset = queryset.filter(address__icontains=search_params.get('address').strip())
+                valid_query_found = True
+            elif 'city' in search_params:
+                queryset = queryset.filter(city__icontains=search_params.get('city').strip())
+                valid_query_found = True
+            elif 'zone' in search_params:
+                queryset = queryset.filter(zone__icontains=search_params.get('zone').strip())
+                valid_query_found = True
+
+            # If no valid query parameters were found, return an empty list
+            if not valid_query_found:
+                response_data = {
+                    'result': {"message":"Not a valid query param","allowed_query_params":['name','address','city','zone']},
+                    'status': ResponseStatus.SUCCESS.value
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
+
+            # Serialize the filtered queryset
             serializer = self.get_serializer(queryset, many=True)
             response_data = {
                 'result': serializer.data,
@@ -35,8 +64,30 @@ class PujoViewSet(viewsets.ModelViewSet):
             }
 
             return Response(response_data, status=status.HTTP_200_OK)
+
         except Exception as e:
             logger.error(f"Error fetching Pujo list: {str(e)}")
+            response_data = {
+                'error': str(e),
+                'status': ResponseStatus.FAIL.value
+            }
+            return Response(response_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=False, methods=['get'], url_path='trending')
+    def trending(self, request, *args, **kwargs):
+        try:
+            trending_pujos = Pujo.objects.all().order_by('-searchScore')[:10]
+            
+            serializer = TrendingPujoSerializer(trending_pujos, many=True)
+            
+            response_data = {
+                'result': serializer.data,
+                'status': ResponseStatus.SUCCESS.value
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            logger.error(f"Error fetching trending Pujos: {str(e)}")
             response_data = {
                 'error': str(e),
                 'status': ResponseStatus.FAIL.value
