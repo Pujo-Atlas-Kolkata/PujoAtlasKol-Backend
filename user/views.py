@@ -11,6 +11,7 @@ from django.contrib.auth import authenticate, login, logout
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.permissions import AllowAny
+from .permission import IsAuthenticatedUser
 
 logger = logging.getLogger("user")
 
@@ -18,9 +19,11 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     lookup_field = 'id'
-
+    permission_classes = [IsAuthenticatedUser]
+        
     def retrieve(self, request, uuid, *args, **kwargs):
         try:
+            self.check_permissions(request)   
             user = self.get_queryset().filter(id=uuid).first()
             if not user:
                 response_data={
@@ -44,6 +47,7 @@ class UserViewSet(viewsets.ModelViewSet):
     
     def create(self, request, *args, **kwargs):
         try:
+            self.check_permissions(request)
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
@@ -66,6 +70,7 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(response_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def update(self, request, uuid=None, *args, **kwargs):
+        self.check_permissions(request)
         user = self.get_queryset().filter(id=uuid).first()
         if not user:
             response_data = {
@@ -94,6 +99,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
         
     def destroy(self, request, uuid=None, *args, **kwargs):
+        self.check_permissions(request)
         user = self.get_queryset().filter(id=uuid).first()
 
         if not user:
@@ -113,6 +119,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def partial_update(self, request, uuid=None, *args, **kwargs):
         try:
+            self.check_permissions(request)
             user = self.get_queryset().filter(id=uuid).first()
             
             if not user:
@@ -151,11 +158,18 @@ class LoginView(APIView):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            response_data = {
-                'result': 'Logged in successfully',
-                'status': ResponseStatus.SUCCESS.value
+            if request.user.is_authenticated:
+                response_data = {
+                    'result': 'Logged in successfully',
+                    'status': ResponseStatus.SUCCESS.value
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
+            else:
+                response_data = {
+                'error': 'Invalid credentials',
+                'status': ResponseStatus.FAIL.value
             }
-            return Response(response_data, status=status.HTTP_200_OK)
+            return Response(response_data, status=status.HTTP_403_FORBIDDEN)
         else:
             response_data = {
                 'error': 'Invalid credentials',

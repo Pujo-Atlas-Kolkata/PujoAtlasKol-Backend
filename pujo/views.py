@@ -7,6 +7,7 @@ from .serializers import PujoSerializer, TrendingPujoSerializer
 from core.ResponseStatus import ResponseStatus
 import logging
 from django.utils import timezone
+from ..user.permission import IsSuperOrAdminUser
 
 
 logger = logging.getLogger("pujo")
@@ -15,6 +16,7 @@ class PujoViewSet(viewsets.ModelViewSet):
     queryset = Pujo.objects.all()
     serializer_class = PujoSerializer
     lookup_field = 'id'
+    permission_classes=[IsSuperOrAdminUser]
 
     def list(self, request, *args, **kwargs):
         try:
@@ -113,6 +115,7 @@ class PujoViewSet(viewsets.ModelViewSet):
             return Response(response_data, status=status.HTTP_404_NOT_FOUND)
 
     def create(self, request, *args, **kwargs):
+        self.check_permissions(request)
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -130,6 +133,7 @@ class PujoViewSet(viewsets.ModelViewSet):
 
     def update(self, request, uuid=None, *args, **kwargs):
         try:
+            self.check_permissions(request)
             pujo = self.get_object()
             serializer = self.get_serializer(pujo, data=request.data)
             if serializer.is_valid():
@@ -154,6 +158,7 @@ class PujoViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, uuid=None, *args, **kwargs):
         try:
+            self.check_permissions(request)
             pujo = self.get_object()
             pujo.delete()
             response_data = {
