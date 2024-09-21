@@ -7,8 +7,10 @@ from .serializers import UserSerializer
 from core.ResponseStatus import ResponseStatus
 import logging
 from django.utils import timezone
-from django.db import connection
-
+from django.contrib.auth import authenticate, login, logout
+from rest_framework.views import APIView
+from rest_framework import status
+from rest_framework.permissions import AllowAny
 
 logger = logging.getLogger("user")
 
@@ -101,7 +103,6 @@ class UserViewSet(viewsets.ModelViewSet):
             }
             return Response(response_data, status=status.HTTP_404_NOT_FOUND)
         else:
-            # Perform soft delete
             user.delete()
 
             response_data = {
@@ -141,4 +142,32 @@ class UserViewSet(viewsets.ModelViewSet):
                 'status': ResponseStatus.FAIL.value
             }
             return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+class LoginView(APIView):
+    permission_classes = [AllowAny]
 
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            response_data = {
+                'result': 'Logged in successfully',
+                'status': ResponseStatus.SUCCESS.value
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        else:
+            response_data = {
+                'error': 'Invalid credentials',
+                'status': ResponseStatus.FAIL.value
+            }
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
+class LogoutView(APIView):
+    def post(self, request):
+        logout(request)
+        response_data = {
+                'result': 'Logged out successfully',
+                'status': ResponseStatus.SUCCESS.value
+                }
+        return Response(response_data, status=status.HTTP_200_OK)

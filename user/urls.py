@@ -1,7 +1,8 @@
 from django.urls import path
-from .views import UserViewSet
+from .views import UserViewSet, LoginView, LogoutView
 
 # Define custom views for list and detail actions
+app_name = 'user'
 
 user_create = UserViewSet.as_view({
     'post': 'create'  # Create action
