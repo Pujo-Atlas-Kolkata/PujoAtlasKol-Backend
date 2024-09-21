@@ -6,13 +6,15 @@ from .models import Pujo
 from .serializers import PujoSerializer, TrendingPujoSerializer
 from core.ResponseStatus import ResponseStatus
 import logging
+from django.utils import timezone
+
 
 logger = logging.getLogger("pujo")
 
 class PujoViewSet(viewsets.ModelViewSet):
     queryset = Pujo.objects.all()
     serializer_class = PujoSerializer
-    lookup_field = 'uuid'
+    lookup_field = 'id'
 
     def list(self, request, *args, **kwargs):
         try:
@@ -94,9 +96,9 @@ class PujoViewSet(viewsets.ModelViewSet):
             }
             return Response(response_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def retrieve(self, request, pk=None, *args, **kwargs):
+    def retrieve(self, request, uuid=None, *args, **kwargs):
         try:
-            pujo = self.get_object()
+            pujo = self.get_queryset().filter(id=uuid).first()
             serializer = self.get_serializer(pujo)
             response_data = {
                 'result': serializer.data,
@@ -115,7 +117,7 @@ class PujoViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             serializer.save()
             response_data = {
-                'result': {'id': serializer.data["uuid"]},
+                'result': {'id': serializer.data["id"]},
                 'status': ResponseStatus.SUCCESS.value
             }
             return Response(response_data, status=status.HTTP_201_CREATED)
@@ -126,12 +128,12 @@ class PujoViewSet(viewsets.ModelViewSet):
             }
             return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
-    def update(self, request, pk=None, *args, **kwargs):
+    def update(self, request, uuid=None, *args, **kwargs):
         try:
             pujo = self.get_object()
             serializer = self.get_serializer(pujo, data=request.data)
             if serializer.is_valid():
-                serializer.save()
+                serializer.save(updated_at=timezone.now())
                 response_data = {
                     'result': serializer.data,
                     'status': ResponseStatus.SUCCESS.value
@@ -150,7 +152,7 @@ class PujoViewSet(viewsets.ModelViewSet):
             }
             return Response(response_data, status=status.HTTP_404_NOT_FOUND)
 
-    def destroy(self, request, pk=None, *args, **kwargs):
+    def destroy(self, request, uuid=None, *args, **kwargs):
         try:
             pujo = self.get_object()
             pujo.delete()

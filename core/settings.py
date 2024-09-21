@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,13 +22,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-^-0&_x70-d(v=7@ijz2ztx%m5ya6nt8@w-z&i+r**1t^s%#mga'
+SECRET_KEY = config('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
-
+ALLOWED_HOSTS = ["pujoatlaskolbackend.onrender.com",'localhost', '127.0.0.1']
 
 # Application definition
 
@@ -43,7 +44,10 @@ INSTALLED_APPS = [
     'import_export',
     'pandal',
     'pujo',
+    'user',
 ]
+
+AUTH_USER_MODEL = 'user.User'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -89,8 +93,6 @@ IMPORT_EXPORT_USE_TRANSACTIONS = True
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-from decouple import config
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -133,10 +135,15 @@ AUTH_PASSWORD_VALIDATORS = [
 #             'level': 'DEBUG',
 #             'class': 'logging.StreamHandler',
 #         },
+#         'file': {
+#             'level': 'ERROR',
+#             'class': 'logging.FileHandler',
+#             'filename':os.path.join(BASE_DIR, 'error.log'),
+#         },
 #     },
 #     'loggers': {
 #         'django': {
-#             'handlers': ['console'],
+#             'handlers': ['console', 'file'],
 #             'level': 'DEBUG',
 #             'propagate': True,
 #         },
@@ -147,6 +154,7 @@ AUTH_PASSWORD_VALIDATORS = [
 #         },
 #     },
 # }
+
 
 
 # Internationalization
@@ -165,6 +173,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
