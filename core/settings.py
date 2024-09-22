@@ -163,7 +163,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3001",
 ]
 
-logger
+# logger
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
