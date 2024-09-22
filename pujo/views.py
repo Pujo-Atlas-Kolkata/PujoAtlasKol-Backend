@@ -90,7 +90,7 @@ class PujoViewSet(viewsets.ModelViewSet):
     def trending(self, request, *args, **kwargs):
         try:
             trending_pujos = Pujo.objects.all().order_by('-searchScore')[:10]
-            
+
             serializer = TrendingPujoSerializer(trending_pujos, many=True)
             
             response_data = {
@@ -110,6 +110,13 @@ class PujoViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, uuid=None, *args, **kwargs):
         try:
             pujo = self.get_queryset().filter(id=uuid).first()
+            if pujo is None:
+                response_data = {
+                'result': 'Given Pujo does not exist',
+                'status': ResponseStatus.FAIL.value
+                }
+                return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+            
             serializer = self.get_serializer(pujo)
             response_data = {
                 'result': serializer.data,
@@ -126,7 +133,6 @@ class PujoViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         user = request.user
         self.check_object_permissions(request, user)
-        print("Current user:", request.user)
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -147,6 +153,13 @@ class PujoViewSet(viewsets.ModelViewSet):
             user = request.user
             self.check_object_permissions(request, user)
             pujo = self.get_queryset().filter(id=uuid).first()
+            if pujo is None:
+                response_data = {
+                'result': 'Given Pujo does not exist',
+                'status': ResponseStatus.FAIL.value
+                }
+                return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+            
             serializer = self.get_serializer(pujo, data=request.data)
             if serializer.is_valid():
                 serializer.save(updated_at=timezone.now())
@@ -173,6 +186,13 @@ class PujoViewSet(viewsets.ModelViewSet):
             user = request.user
             self.check_object_permissions(request, user)
             pujo = self.get_queryset().filter(id=uuid).first()
+            if pujo is None:
+                response_data = {
+                'error': 'Given Pujo does not exist',
+                'status': ResponseStatus.FAIL.value
+                }
+                return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+            
             pujo.delete()
             response_data = {
                 'result': "Delete successful",
@@ -181,7 +201,7 @@ class PujoViewSet(viewsets.ModelViewSet):
             return Response(response_data, status=status.HTTP_200_OK)
         except Pujo.DoesNotExist:
             response_data = {
-                'result': 'Given Pujo does not exist',
+                'error': 'Given Pujo does not exist',
                 'status': ResponseStatus.FAIL.value
             }
             return Response(response_data, status=status.HTTP_404_NOT_FOUND)

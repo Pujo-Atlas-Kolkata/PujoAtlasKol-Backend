@@ -4,6 +4,8 @@ from django.db import models
 from django.db.models import Q
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+from django.contrib.postgres.fields import ArrayField
+
 
 class User(AbstractUser):
     USER_TYPE_CHOICES = [
@@ -20,19 +22,19 @@ class User(AbstractUser):
     profile_picture = models.CharField(max_length=255, null=True)  
     bio = models.TextField(null=True)
     is_verified = models.BooleanField(default=False)
-    is_deleted = models.BooleanField(default=False) 
     user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default="user")
     updated_at = models.DateTimeField(null=True, default=None)
     created_at = models.DateTimeField(auto_now=True)
-
+    favorites = ArrayField(models.CharField(max_length=255), default=list, blank=True)
+    wishlists = ArrayField(models.CharField(max_length=255), default=list, blank=True)
+    saves = ArrayField(models.CharField(max_length=255), default=list, blank=True)
+    pandal_visits = ArrayField(models.CharField(max_length=255), default=list, blank=True)
 
     def clean(self):
-        # Check if a user with the same username exists and is not soft-deleted
-        if User.objects.filter(username=self.username, is_deleted=False).exclude(pk=self.pk).exists():
+        if User.objects.filter(username=self.username).exclude(pk=self.pk).exists():
             raise ValidationError({'username': _('A user with this username already exists.')})
         
-        # Check if a user with the same email exists and is not soft-deleted
-        if User.objects.filter(email=self.email, is_deleted=False).exclude(pk=self.pk).exists():
+        if User.objects.filter(email=self.email).exclude(pk=self.pk).exists():
             raise ValidationError({'email': _('A user with this email already exists.')})
         
         super(User, self).clean()
@@ -44,11 +46,8 @@ class User(AbstractUser):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(
-                fields=['username', 'email'],
-                condition=Q(is_deleted=False),
-                name='unique_if_not_deleted'
-            )
+            models.UniqueConstraint(fields=['username'], name='unique_username'),
+            models.UniqueConstraint(fields=['email'], name='unique_email'),
         ]
 
     def __str__(self):
