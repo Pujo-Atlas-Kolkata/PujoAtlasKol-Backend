@@ -16,6 +16,6 @@ user_detail = UserViewSet.as_view({
 })
 
 urlpatterns = [
-    path('create', user_create, name='user_create'),  # URL for creating a new User
+    path('register', user_create, name='user_create'),  # URL for creating a new User
     path('<uuid:uuid>', user_detail, name='user_detail'),  # URL for detail, update, and delete
 ]

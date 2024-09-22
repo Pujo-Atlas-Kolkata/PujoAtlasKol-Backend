@@ -8,9 +8,10 @@ class UserSerializer(serializers.ModelSerializer):
                   "access_location", "contact", "gender", "birth_date",
                   "profile_picture", "bio", "is_verified","user_type"]
         extra_kwargs = {
-            'password': {'write_only': True},
-            'username': {'required': False},
-            'email': {'required': False},
+            'password': {'write_only': True, 'required': True},
+            'username': {'required': True},
+            'email': {'required': True},
+            'user_type': {'required': True},
         }
 
     def create(self, validated_data):
@@ -65,3 +66,25 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({'email': 'A user with this email already exists.'})
 
         return attrs
+
+class UserLoginSerializer(serializers.ModelSerializer):
+    username = serializers.CharField()
+    password = serializers.CharField(write_only=True)
+    class Meta:
+        model = User
+        fields = ['username', 'password']
+
+class UserLogoutSerializer(serializers.ModelSerializer):
+    username = serializers.CharField()
+    id = serializers.UUIDField()
+    class Meta:
+        model = User
+        fields = ['username','id']
+
+class RefreshTokenSerializer(serializers.ModelSerializer):
+    username = serializers.CharField()
+    id = serializers.UUIDField()
+    refresh = serializers.CharField(required=True)
+    class Meta:
+        model = User
+        fields = ['username','id','refresh']

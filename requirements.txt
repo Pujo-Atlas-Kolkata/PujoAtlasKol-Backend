@@ -14,3 +14,4 @@ python-decouple
 drf-yasg
 setuptools
 djangorestframework-simplejwt
+django-cors-headers

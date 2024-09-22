@@ -1,4 +1,4 @@
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 import uuid
 from django.db import models
 from django.db.models import Q
@@ -20,11 +20,11 @@ class User(AbstractUser):
     profile_picture = models.CharField(max_length=255, null=True)  
     bio = models.TextField(null=True)
     is_verified = models.BooleanField(default=False)
-    is_deleted = models.BooleanField(default=False)
-    access_token = models.CharField(max_length=255, null=True) 
-    refresh_token = models.CharField(max_length=255, null=True)  
+    is_deleted = models.BooleanField(default=False) 
     user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default="user")
     updated_at = models.DateTimeField(null=True, default=None)
+    created_at = models.DateTimeField(auto_now=True)
+
 
     def clean(self):
         # Check if a user with the same username exists and is not soft-deleted
@@ -52,4 +52,13 @@ class User(AbstractUser):
         ]
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name}"
+        return str(self.id)
+
+
+
+class BlacklistedToken(models.Model):
+    token = models.CharField(max_length=512, unique=True)
+    blacklisted_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return self.token

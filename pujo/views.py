@@ -7,8 +7,10 @@ from .serializers import PujoSerializer, TrendingPujoSerializer
 from core.ResponseStatus import ResponseStatus
 import logging
 from django.utils import timezone
-from ..user.permission import IsSuperOrAdminUser
-
+from user.permission import IsSuperOrAdminUser
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.decorators import action
+from rest_framework import permissions
 
 logger = logging.getLogger("pujo")
 
@@ -17,6 +19,13 @@ class PujoViewSet(viewsets.ModelViewSet):
     serializer_class = PujoSerializer
     lookup_field = 'id'
     permission_classes=[IsSuperOrAdminUser]
+    authentication_classes = [JWTAuthentication]
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve', 'trending']:
+            # Allow anyone to see list,trending and retreive
+            return [permissions.AllowAny()]
+        return super().get_permissions()
 
     def list(self, request, *args, **kwargs):
         try:
@@ -115,7 +124,9 @@ class PujoViewSet(viewsets.ModelViewSet):
             return Response(response_data, status=status.HTTP_404_NOT_FOUND)
 
     def create(self, request, *args, **kwargs):
-        self.check_permissions(request)
+        user = request.user
+        self.check_object_permissions(request, user)
+        print("Current user:", request.user)
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -133,8 +144,9 @@ class PujoViewSet(viewsets.ModelViewSet):
 
     def update(self, request, uuid=None, *args, **kwargs):
         try:
-            self.check_permissions(request)
-            pujo = self.get_object()
+            user = request.user
+            self.check_object_permissions(request, user)
+            pujo = self.get_queryset().filter(id=uuid).first()
             serializer = self.get_serializer(pujo, data=request.data)
             if serializer.is_valid():
                 serializer.save(updated_at=timezone.now())
@@ -158,8 +170,9 @@ class PujoViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, uuid=None, *args, **kwargs):
         try:
-            self.check_permissions(request)
-            pujo = self.get_object()
+            user = request.user
+            self.check_object_permissions(request, user)
+            pujo = self.get_queryset().filter(id=uuid).first()
             pujo.delete()
             response_data = {
                 'result': "Delete successful",
