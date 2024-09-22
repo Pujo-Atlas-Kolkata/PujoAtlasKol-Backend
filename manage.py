@@ -16,15 +16,14 @@ def main():
             "forget to activate a virtual environment?"
         ) from exc
 
-    # Get the port from the .env file or environment variable, default to 8000
+    # Get the port from the environment or .env file, default to 8000
     port = config('PORT', default=os.environ.get('PORT', '8000'))
 
     # Check if the runserver command is being used
     if len(sys.argv) > 1 and sys.argv[1] == 'runserver':
         # If no port is provided in the command, append the port argument
-        if len(sys.argv) == 2:
-            sys.argv.append('0.0.0.0:' + port)
-        # If a port is provided, leave it unchanged
+        if len(sys.argv) == 2 or ':' not in sys.argv[2]:  # Check if port is missing or incorrect
+            sys.argv[2:] = ['0.0.0.0:' + port]  # Replace with correct port
 
     execute_from_command_line(sys.argv)
 
