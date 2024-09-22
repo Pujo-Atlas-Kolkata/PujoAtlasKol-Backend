@@ -44,8 +44,8 @@ urlpatterns = [
     path('login', LoginView.as_view(), name='login'),  # Direct login path
     path('logout', LogoutView.as_view(), name='logout'),  # Direct logout path
     path('api/token/refresh', CustomTokenRefreshView.as_view(), name='token_refresh'),
-    path('api-auth/', include('rest_framework.urls')), 
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    # path('api-auth/', include('rest_framework.urls')), 
     #path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     #path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
