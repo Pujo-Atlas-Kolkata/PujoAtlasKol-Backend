@@ -163,42 +163,42 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3001",
 ]
 
-#logger
-# LOGGING = {
-#     'version': 1,
-#     'disable_existing_loggers': False,
-#     'filters': {
-#         'require_debug_false': {
-#             'level': 'ERROR',
-#             'class': 'django.utils.log.CallbackFilter',
-#             'callback': lambda record: not record.filename.endswith('.mo'),
-#         },
-#     },
-#     'handlers': {
-#         'console': {
-#             'level': 'ERROR',
-#             'class': 'logging.StreamHandler',
-#             'filters': ['require_debug_false'],
-#         },
-#         'file': {
-#             'level': 'ERROR',
-#             'class': 'logging.FileHandler',
-#             'filename':os.path.join(BASE_DIR, 'error.log'),
-#         },
-#     },
-#     'loggers': {
-#         'django': {
-#             'handlers': ['console', 'file'],
-#             'level': 'ERROR',
-#             'propagate': True,
-#         },
-#         'pujo': {  
-#             'handlers': ['console'],
-#             'level': 'ERROR',
-#             'propagate': True,
-#         },
-#     },
-# }
+logger
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'filters': {
+        'require_debug_false': {
+            'level': 'DEBUG',
+            'class': 'django.utils.log.CallbackFilter',
+            'callback': lambda record: not record.filename.endswith('.mo'),
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'filters': ['require_debug_false'],
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename':os.path.join(BASE_DIR, 'error.log'),
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'pujo': {  
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
 
 
 
