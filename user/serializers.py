@@ -6,7 +6,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "username", "first_name", "last_name", "email", "password",
                   "access_location", "contact", "gender", "birth_date",
-                  "profile_picture", "bio", "is_verified","user_type"]
+                  "profile_picture", "bio", "is_verified","user_type","favorites", "wishlists", "saves"]
         extra_kwargs = {
             'password': {'write_only': True, 'required': True},
             'username': {'required': True},
@@ -16,7 +16,9 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user_type = validated_data.get('user_type','user')
-        
+        validated_data.pop("favorites", None)
+        validated_data.pop("wishlists", None)
+        validated_data.pop("saves", None)
         validated_data['user_type'] = user_type
         
         if user_type == 'superadmin':
@@ -37,7 +39,7 @@ class UserSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         # Prevent user_type and certain fields from being updated
         for field in ['user_type', 'last_login', 'is_superuser', 'is_staff', 'date_joined',
-                      'is_deleted', 'access_token', 'refresh_token', 'groups', 'user_permissions']:
+                      'groups', 'user_permissions', "favorites", "created_at", "wishlists", "saves"]:
             validated_data.pop(field, None)
 
         # Extract and handle password
@@ -59,10 +61,10 @@ class UserSerializer(serializers.ModelSerializer):
     
     def validate(self, attrs):
         # Check for non-deleted users only
-        if User.objects.filter(username=attrs.get('username'), is_deleted=False).exists():
+        if User.objects.filter(username=attrs.get('username')).exists():
             raise serializers.ValidationError({'username': 'A user with this username already exists.'})
 
-        if User.objects.filter(email=attrs.get('email'), is_deleted=False).exists():
+        if User.objects.filter(email=attrs.get('email')).exists():
             raise serializers.ValidationError({'email': 'A user with this email already exists.'})
 
         return attrs

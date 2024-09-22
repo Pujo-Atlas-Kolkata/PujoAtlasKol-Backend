@@ -158,6 +158,10 @@ class UserViewSet(viewsets.ModelViewSet):
                 }
                 return Response(response_data, status=status.HTTP_404_NOT_FOUND)
             else:
+                for field in ['user_type', 'last_login', 'is_superuser', 'is_staff', 'date_joined',
+                      'groups', 'user_permissions', "favorites", "created_at", "saves", "wishlists"]:
+                    request.data.pop(field, None)
+                
                 serializer = self.get_serializer(user, data=request.data, partial=True)
                 if serializer.is_valid():
                     serializer.save(updated_at=timezone.now())
@@ -327,4 +331,183 @@ class CustomTokenRefreshView(TokenRefreshView):
                         'status': ResponseStatus.FAIL.value
                     }
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
-                
+
+class FavoritesViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticatedUser]
+
+    def add_favorite(self, request, user_id):
+        user = User.objects.get(id=user_id)
+        self.check_object_permissions(request, user)
+        favorite_item = request.data.get('id')
+
+        if favorite_item is None:
+            response_data = {
+                    "error": "No favorite item provided",
+                    'status': ResponseStatus.FAIL.value
+            }
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
+
+        if favorite_item in user.favorites:
+            response_data = {
+                    'result': f"This pujo is already {user.username}'s favorite",
+                    'status': ResponseStatus.FAIL.value
+            }
+            return Response(response_data, status=status.HTTP_406_NOT_ACCEPTABLE)
+        else:    
+            user.favorites.append(favorite_item)
+            user.save()
+            response_data = {
+                    'result': user.favorites,
+                    'status': ResponseStatus.SUCCESS.value
+                }
+            return Response(response_data, status=status.HTTP_200_OK)
+    
+    def remove_favorite(self, request, user_id):
+        user = User.objects.get(id=user_id)
+        self.check_object_permissions(request, user)
+        favorite_item = request.data.get('id')
+
+        if favorite_item is None:
+            response_data = {
+                "error": "No favorite item provided",
+                'status': ResponseStatus.FAIL.value
+            }
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
+        
+        if favorite_item in user.favorites:
+            user.favorites.remove(favorite_item)
+            user.save()
+            response_data = {
+            'result': user.favorites,
+            'status': ResponseStatus.SUCCESS.value
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        else:
+            response_data = {
+                "error": "Favorite item not found",
+                'status': ResponseStatus.FAIL.value
+            }
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
+class WishlistViewSet(viewsets.ModelViewSet):
+        permission_classes = [IsAuthenticatedUser]
+
+        def add_wishlist(self, request, user_id):
+            user = User.objects.get(id=user_id)
+            self.check_object_permissions(request, user)
+            item = request.data.get('id')
+
+            if item is None:
+                response_data = {
+                        "error": "No wishlist item provided",
+                        'status': ResponseStatus.FAIL.value
+                }
+                return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
+
+            if item in user.wishlist:
+                response_data = {
+                        'result': f"This pujo is already {user.username}'s wishlist",
+                        'status': ResponseStatus.FAIL.value
+                }
+                return Response(response_data, status=status.HTTP_406_NOT_ACCEPTABLE)
+            else:    
+                user.wishlist.append(item)
+                user.save()
+                response_data = {
+                        'result': user.wishlist,
+                        'status': ResponseStatus.SUCCESS.value
+                    }
+                return Response(response_data, status=status.HTTP_200_OK)
+            
+        def remove_wishlist(self, request, user_id):
+            user = User.objects.get(id=user_id)
+            self.check_object_permissions(request, user)
+            
+            item = request.data.get('id')
+
+            if item is None:
+                response_data = {
+                    "error": "No wishlist item provided",
+                    'status': ResponseStatus.FAIL.value
+                }
+                return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
+            
+            if item in user.wishlist:
+                user.wishlist.remove(item)
+                user.save()
+                response_data = {
+                'result': user.wishlist,
+                'status': ResponseStatus.SUCCESS.value
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
+            else:
+                response_data = {
+                    "error": "wishlist item not found",
+                    'status': ResponseStatus.FAIL.value
+                }
+                return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+            
+class SaveViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticatedUser]
+
+    def add_saved(self,request,user_id):
+        user = User.objects.get(id=user_id)
+        self.check_object_permissions(request, user)
+        item = request.data.get('id')
+
+        if item is None:
+            response_data = {
+                        "error": "No item to save",
+                        'status': ResponseStatus.FAIL.value
+            }
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
+
+        if item in user.saves:
+            response_data = {
+                        'result': f"This pujo is already {user.username}'s saves",
+                        'status': ResponseStatus.FAIL.value
+            }
+            return Response(response_data, status=status.HTTP_406_NOT_ACCEPTABLE)
+        else:    
+            user.saves.append(item)
+            user.save()
+            response_data = {
+                        'result': user.saves,
+                        'status': ResponseStatus.SUCCESS.value
+                }
+            return Response(response_data, status=status.HTTP_200_OK)
+    
+
+    def remove_saved(self,request,user_id):
+        user = User.objects.get(id=user_id)
+        self.check_object_permissions(request, user)
+            
+        item = request.data.get('id')
+
+        if item is None:
+            response_data = {
+                "error": "No item to save",
+                'status': ResponseStatus.FAIL.value
+            }
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
+            
+        if item in user.saves:
+            user.saves.remove(item)
+            user.save()
+            response_data = {
+            'result': user.saves,
+            'status': ResponseStatus.SUCCESS.value
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        else:
+            response_data = {
+            "error": "save item not found",
+            'status': ResponseStatus.FAIL.value
+            }
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)

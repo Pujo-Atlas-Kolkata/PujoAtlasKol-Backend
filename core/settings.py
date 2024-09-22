@@ -166,10 +166,18 @@ CORS_ALLOWED_ORIGINS = [
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'filters': {
+        'require_debug_false': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.CallbackFilter',
+            'callback': lambda record: not record.filename.endswith('.mo'),
+        },
+    },
     'handlers': {
         'console': {
-            'level': 'DEBUG',
+            'level': 'ERROR',
             'class': 'logging.StreamHandler',
+            'filters': ['require_debug_false'],
         },
         'file': {
             'level': 'ERROR',
@@ -180,12 +188,12 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ['console', 'file'],
-            'level': 'DEBUG',
+            'level': 'ERROR',
             'propagate': True,
         },
         'pujo': {  
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'ERROR',
             'propagate': True,
         },
     },
