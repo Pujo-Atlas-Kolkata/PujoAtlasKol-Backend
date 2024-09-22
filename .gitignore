@@ -166,3 +166,4 @@ cython_debug/
 /dev
 /venv
 **/__pycache__/
+example.http

@@ -248,12 +248,12 @@ class LogoutView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
             else:
                 if BlacklistedToken.objects.filter(token=token).exists():
-                    return Response({'error': 'Token is already invalidated'}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({'error': 'Token is already invalidated','status': ResponseStatus.FAIL.value}, status=status.HTTP_400_BAD_REQUEST)
 
                 try:
                     BlacklistedToken.objects.create(token=token)
                 except Exception as e:
-                    return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({'error': str(e), 'status': ResponseStatus.FAIL.value}, status=status.HTTP_400_BAD_REQUEST)
 
                 response_data = {
                     'result': 'Logged out successfully',
@@ -288,7 +288,7 @@ class CustomTokenRefreshView(TokenRefreshView):
                 }, status=status.HTTP_400_BAD_REQUEST)
             else:
                 if BlacklistedToken.objects.filter(token=access_token).exists():
-                    return Response({'error': 'Token is already invalidated'}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({'error': 'Token is already invalidated','status': ResponseStatus.FAIL.value}, status=status.HTTP_400_BAD_REQUEST)
 
             serializer = RefreshTokenSerializer(data=request.data)
             if serializer.is_valid():
@@ -317,7 +317,7 @@ class CustomTokenRefreshView(TokenRefreshView):
                     BlacklistedToken.objects.create(token=access_token)
                     BlacklistedToken.objects.create(token=incoming_refresh_token)
                 except Exception as e:
-                    return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({'error': str(e),'status': ResponseStatus.FAIL.value}, status=status.HTTP_400_BAD_REQUEST)
 
 
                 return Response(response_data, status=status.HTTP_200_OK)
