@@ -6,7 +6,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "username", "first_name", "last_name", "email", "password",
                   "access_location", "contact", "gender", "birth_date",
-                  "profile_picture", "bio", "is_verified","user_type","favorites", "wishlists", "saves"]
+                  "profile_picture", "bio", "is_verified","user_type","favorites", "wishlists", "saves","pandal_visits"]
         extra_kwargs = {
             'password': {'write_only': True, 'required': True},
             'username': {'required': True},
@@ -39,7 +39,7 @@ class UserSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         # Prevent user_type and certain fields from being updated
         for field in ['user_type', 'last_login', 'is_superuser', 'is_staff', 'date_joined',
-                      'groups', 'user_permissions', "favorites", "created_at", "wishlists", "saves"]:
+                      'groups', 'user_permissions', "favorites", "created_at", "wishlists", "saves","pandal_visits"]:
             validated_data.pop(field, None)
 
         # Extract and handle password
@@ -68,6 +68,14 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({'email': 'A user with this email already exists.'})
 
         return attrs
+
+class UserDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username", "first_name", "last_name",
+                  "contact", "gender", "birth_date",
+                  "profile_picture", "bio"]
+       
 
 class UserLoginSerializer(serializers.ModelSerializer):
     username = serializers.CharField()

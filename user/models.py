@@ -28,6 +28,7 @@ class User(AbstractUser):
     favorites = ArrayField(models.CharField(max_length=255), default=list, blank=True)
     wishlists = ArrayField(models.CharField(max_length=255), default=list, blank=True)
     saves = ArrayField(models.CharField(max_length=255), default=list, blank=True)
+    pandal_visits = ArrayField(models.CharField(max_length=255), default=list, blank=True)
 
     def clean(self):
         if User.objects.filter(username=self.username).exclude(pk=self.pk).exists():

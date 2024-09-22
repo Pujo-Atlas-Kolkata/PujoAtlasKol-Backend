@@ -188,7 +188,7 @@ class PujoViewSet(viewsets.ModelViewSet):
             pujo = self.get_queryset().filter(id=uuid).first()
             if pujo is None:
                 response_data = {
-                'result': 'Given Pujo does not exist',
+                'error': 'Given Pujo does not exist',
                 'status': ResponseStatus.FAIL.value
                 }
                 return Response(response_data, status=status.HTTP_404_NOT_FOUND)
@@ -201,7 +201,7 @@ class PujoViewSet(viewsets.ModelViewSet):
             return Response(response_data, status=status.HTTP_200_OK)
         except Pujo.DoesNotExist:
             response_data = {
-                'result': 'Given Pujo does not exist',
+                'error': 'Given Pujo does not exist',
                 'status': ResponseStatus.FAIL.value
             }
             return Response(response_data, status=status.HTTP_404_NOT_FOUND)

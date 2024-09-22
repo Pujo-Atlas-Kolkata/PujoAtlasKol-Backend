@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import UserViewSet, FavoritesViewSet, WishlistViewSet, SaveViewSet
+from .views import UserViewSet, FavoritesViewSet, WishlistViewSet, SaveViewSet, PandalVisitsViewSet
 
 # Define custom views for list and detail actions
 # app_name = 'user'
@@ -24,6 +24,9 @@ wishlist_remove = WishlistViewSet.as_view({'post': 'remove_wishlist'})
 saved_add = SaveViewSet.as_view({'post':'add_saved'})
 saved_remove = SaveViewSet.as_view({'post':'remove_saved'})
 
+pandal_visits_add = PandalVisitsViewSet.as_view({'post':'add_visits'})
+pandal_visits_remove = PandalVisitsViewSet.as_view({'post':'remove_visits'})
+
 urlpatterns = [
     path('register', user_create, name='user_create'),  # URL for creating a new User
     path('<uuid:uuid>', user_detail, name='user_detail'),  # URL for detail, update, and delete
@@ -31,6 +34,9 @@ urlpatterns = [
     path('<uuid:user_id>/favorites/remove', favorites_remove, name="fav_remove"),
     path('<uuid:user_id>/wishlist/add', wishlist_create, name="wishlist_create"),
     path('<uuid:user_id>/wishlist/remove', wishlist_remove, name="wishlist_remove"),
-    path('<uuid:user_id>/save/remove', saved_add, name="saved_remove"),
+    path('<uuid:user_id>/save/add', saved_add, name="saved_add"),
     path('<uuid:user_id>/save/remove', saved_remove, name="saved_remove"),
+    path('<uuid:user_id>/pandal_visits/add', pandal_visits_add, name="pandal_visits_add"),
+    path('<uuid:user_id>/pandal_visits/remove', pandal_visits_remove, name="pandal_visits_remove"),
+    path('user_details/<uuid:user_id>', UserViewSet.as_view({'get':'get_user_details'}), name='get_user_details')
 ]

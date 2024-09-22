@@ -2,7 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from django.db.models import Q, F
 from .models import User, BlacklistedToken
-from .serializers import UserSerializer,UserLoginSerializer,UserLogoutSerializer,RefreshTokenSerializer
+from .serializers import UserSerializer,UserLoginSerializer,UserLogoutSerializer,RefreshTokenSerializer,UserDetailsSerializer
 from core.ResponseStatus import ResponseStatus
 import logging
 from django.utils import timezone
@@ -15,6 +15,7 @@ from rest_framework import permissions
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.decorators import action
 
 logger = logging.getLogger("user")
 
@@ -62,7 +63,30 @@ class UserViewSet(viewsets.ModelViewSet):
                 'status': ResponseStatus.FAIL.value
             }
             return Response(response_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+    @action(detail=False, methods=['get'], url_path='get_user_details')
+    def get_user_details(self, request, user_id=None, *args, **kwargs):
+        try:
+            user = self.get_queryset().filter(id=user_id).first()
+            if user is None:
+                response_data={
+                'error':"User not found",
+                'status': ResponseStatus.FAIL.value
+                }
+                return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+            else:
+                serializer = UserDetailsSerializer(user)
+                response_data = {
+                'result': serializer.data,
+                'status': ResponseStatus.SUCCESS.value
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        except Exception as e:
+            response_data = {
+                'error': str(e),
+                'status': ResponseStatus.FAIL.value
+            }
+            return Response(response_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     def retrieve(self, request, uuid, *args, **kwargs):
         try:
             user = self.get_queryset().filter(id=uuid).first()
@@ -508,6 +532,66 @@ class SaveViewSet(viewsets.ModelViewSet):
         else:
             response_data = {
             "error": "save item not found",
+            'status': ResponseStatus.FAIL.value
+            }
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+        
+class PandalVisitsViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticatedUser]
+
+    def add_visits(self,request, user_id):
+        user = User.objects.get(id=user_id)
+        self.check_object_permissions(request, user)
+        item = request.data.get('id')
+
+        if item is None:
+            response_data = {
+                        "error": "No pandal visits",
+                        'status': ResponseStatus.FAIL.value
+            }
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
+
+        if item in user.pandal_visits:
+            response_data = {
+                        'result': f"This pandal has already been visited by {user.username}",
+                        'status': ResponseStatus.FAIL.value
+            }
+            return Response(response_data, status=status.HTTP_406_NOT_ACCEPTABLE)
+        else:    
+            user.pandal_visits.append(item)
+            user.save()
+            response_data = {
+                        'result': user.pandal_visits,
+                        'status': ResponseStatus.SUCCESS.value
+                }
+            return Response(response_data, status=status.HTTP_200_OK)
+        
+    def remove_visits(self,request, user_id):
+        user = User.objects.get(id=user_id)
+        self.check_object_permissions(request, user)
+            
+        item = request.data.get('id')
+
+        if item is None:
+            response_data = {
+                "error": "No item to remove",
+                'status': ResponseStatus.FAIL.value
+            }
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
+            
+        if item in user.pandal_visits:
+            user.pandal_visits.remove(item)
+            user.save()
+            response_data = {
+            'result': user.pandal_visits,
+            'status': ResponseStatus.SUCCESS.value
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        else:
+            response_data = {
+            "error": "pujo item not found",
             'status': ResponseStatus.FAIL.value
             }
             return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
