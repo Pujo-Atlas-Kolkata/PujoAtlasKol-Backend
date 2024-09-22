@@ -4,7 +4,7 @@ from .models import Pujo
 class PujoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pujo
-        fields = ['uuid', 'name', 'city', 'address', 'lat','lon','zone']
+        fields = ['id', 'name', 'city', 'address', 'lat','lon','zone']
 
 class TrendingPujoSerializer(serializers.ModelSerializer):
     class Meta:

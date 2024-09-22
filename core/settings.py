@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config
+import os
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,13 +23,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-^-0&_x70-d(v=7@ijz2ztx%m5ya6nt8@w-z&i+r**1t^s%#mga'
+SECRET_KEY = config('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
-
+ALLOWED_HOSTS = ["pujoatlaskolbackend.onrender.com",'localhost', '127.0.0.1']
 
 # Application definition
 
@@ -38,15 +40,43 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'drf_yasg',
     'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
+    "corsheaders",
     'import_export',
     'pandal',
     'pujo',
+    'user',
 ]
+
+AUTH_USER_MODEL = 'user.User'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=6),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
+}
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -55,6 +85,13 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'core.urls'
+
+
+SWAGGER_SETTINGS = {
+    'USE_SESSION_AUTH': False,  # Disable session authentication
+    'LOGIN_URL': None,
+    'LOGOUT_URL': None,
+}
 
 TEMPLATES = [
     {
@@ -74,14 +111,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',  # Default
+]
+
 
 # DJANGO IMPORT EXPORT 
 IMPORT_EXPORT_USE_TRANSACTIONS = True
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
-from decouple import config
 
 DATABASES = {
     'default': {
@@ -116,6 +155,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+]
+
 #logger
 # LOGGING = {
 #     'version': 1,
@@ -125,10 +169,15 @@ AUTH_PASSWORD_VALIDATORS = [
 #             'level': 'DEBUG',
 #             'class': 'logging.StreamHandler',
 #         },
+#         'file': {
+#             'level': 'ERROR',
+#             'class': 'logging.FileHandler',
+#             'filename':os.path.join(BASE_DIR, 'error.log'),
+#         },
 #     },
 #     'loggers': {
 #         'django': {
-#             'handlers': ['console'],
+#             'handlers': ['console', 'file'],
 #             'level': 'DEBUG',
 #             'propagate': True,
 #         },
@@ -139,6 +188,7 @@ AUTH_PASSWORD_VALIDATORS = [
 #         },
 #     },
 # }
+
 
 
 # Internationalization
@@ -157,6 +207,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
