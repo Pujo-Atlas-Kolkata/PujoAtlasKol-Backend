@@ -98,3 +98,11 @@ class RefreshTokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['username','id','refresh']
+
+class CollectionSerializer(serializers.ModelSerializer):
+    user_id = serializers.UUIDField(required=True)
+    pujo_id = serializers.UUIDField(required=True)
+
+    class Meta:
+        model = User
+        fields = ['user_id', 'pujo_id']

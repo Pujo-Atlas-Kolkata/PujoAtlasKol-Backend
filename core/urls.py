@@ -41,6 +41,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('pujo/', include('pujo.urls')),
     path('user/', include('user.urls')),
+    path('review/', include('reviews.urls')),
     path('login', LoginView.as_view(), name='login'),  # Direct login path
     path('logout', LogoutView.as_view(), name='logout'),  # Direct logout path
     path('api/token/refresh', CustomTokenRefreshView.as_view(), name='token_refresh'),

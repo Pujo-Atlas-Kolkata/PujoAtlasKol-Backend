@@ -28,7 +28,7 @@ SECRET_KEY = get_random_secret_key()
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["pujoatlaskolbackend.onrender.com",'localhost', '127.0.0.1']
 
@@ -163,25 +163,25 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3001",
 ]
 
-#logger
+# logger
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'filters': {
         'require_debug_false': {
-            'level': 'ERROR',
+            'level': 'DEBUG',
             'class': 'django.utils.log.CallbackFilter',
             'callback': lambda record: not record.filename.endswith('.mo'),
         },
     },
     'handlers': {
         'console': {
-            'level': 'ERROR',
+            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'filters': ['require_debug_false'],
         },
         'file': {
-            'level': 'ERROR',
+            'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename':os.path.join(BASE_DIR, 'error.log'),
         },
@@ -189,12 +189,12 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ['console', 'file'],
-            'level': 'ERROR',
+            'level': 'DEBUG',
             'propagate': True,
         },
         'pujo': {  
             'handlers': ['console'],
-            'level': 'ERROR',
+            'level': 'DEBUG',
             'propagate': True,
         },
     },
