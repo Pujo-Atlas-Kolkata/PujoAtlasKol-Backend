@@ -28,7 +28,7 @@ SECRET_KEY = get_random_secret_key()
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["pujoatlaskolbackend.onrender.com",'localhost', '127.0.0.1']
 
@@ -164,41 +164,41 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 #logger
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'filters': {
-        'require_debug_false': {
-            'level': 'ERROR',
-            'class': 'django.utils.log.CallbackFilter',
-            'callback': lambda record: not record.filename.endswith('.mo'),
-        },
-    },
-    'handlers': {
-        'console': {
-            'level': 'ERROR',
-            'class': 'logging.StreamHandler',
-            'filters': ['require_debug_false'],
-        },
-        'file': {
-            'level': 'ERROR',
-            'class': 'logging.FileHandler',
-            'filename':os.path.join(BASE_DIR, 'error.log'),
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console', 'file'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
-        'pujo': {  
-            'handlers': ['console'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
-    },
-}
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'filters': {
+#         'require_debug_false': {
+#             'level': 'ERROR',
+#             'class': 'django.utils.log.CallbackFilter',
+#             'callback': lambda record: not record.filename.endswith('.mo'),
+#         },
+#     },
+#     'handlers': {
+#         'console': {
+#             'level': 'ERROR',
+#             'class': 'logging.StreamHandler',
+#             'filters': ['require_debug_false'],
+#         },
+#         'file': {
+#             'level': 'ERROR',
+#             'class': 'logging.FileHandler',
+#             'filename':os.path.join(BASE_DIR, 'error.log'),
+#         },
+#     },
+#     'loggers': {
+#         'django': {
+#             'handlers': ['console', 'file'],
+#             'level': 'ERROR',
+#             'propagate': True,
+#         },
+#         'pujo': {  
+#             'handlers': ['console'],
+#             'level': 'ERROR',
+#             'propagate': True,
+#         },
+#     },
+# }
 
 
 
