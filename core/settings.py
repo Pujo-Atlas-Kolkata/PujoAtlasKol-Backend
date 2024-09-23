@@ -30,7 +30,7 @@ SECRET_KEY = get_random_secret_key()
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ["pujoatlaskolbackend.onrender.com",'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ["3.111.147.124",'localhost', '127.0.0.1']
 
 # Application definition
 
@@ -133,9 +133,6 @@ DATABASES = {
         'PASSWORD': config('DJANGO_DB_PASSWORD'),
         'HOST': config('DJANGO_DB_HOST'),
         'PORT': config('DJANGO_DB_PORT'),
-        'OPTIONS': {
-            'sslmode': config('DJANGO_DB_SSLMODE', default='require')
-        },
     }
 }
 
@@ -164,6 +161,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 # logger
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
