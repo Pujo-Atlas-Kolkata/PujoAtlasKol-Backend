@@ -1,7 +1,7 @@
 version: '3.9'
 
 services:
-  my-postgres:
+  database:
     container_name: database-service
     environment:
       POSTGRES_PASSWORD: ${DJANGO_DB_PASSWORD}
@@ -23,13 +23,13 @@ services:
 
   web:
       build: .
-      command: gunicorn your_project_name.wsgi:application --bind 0.0.0.0:8000
+      command: gunicorn your_project_name.wsgi:application --bind 0.0.0.0:3000
       volumes:
         - .:/code
       ports:
-        - "8000:8000"
+        - "3000:3000"
       depends_on:
-        - db
+        - database
       env_file:
         - .env
 
