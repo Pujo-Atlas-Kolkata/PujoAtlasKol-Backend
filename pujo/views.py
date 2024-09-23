@@ -22,7 +22,7 @@ class PujoViewSet(viewsets.ModelViewSet):
     authentication_classes = [JWTAuthentication]
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve', 'trending']:
+        if self.action in ['list', 'trending']:
             # Allow anyone to see list,trending and retreive
             return [permissions.AllowAny()]
         return super().get_permissions()
@@ -109,6 +109,8 @@ class PujoViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, uuid=None, *args, **kwargs):
         try:
+            user = request.user
+            self.check_permissions(request, user)
             pujo = self.get_queryset().filter(id=uuid).first()
             if pujo is None:
                 response_data = {

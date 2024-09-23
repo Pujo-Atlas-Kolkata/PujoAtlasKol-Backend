@@ -1,22 +1,25 @@
-version: '3'
+version: '3.9'
 
 services:
-  web:
-    build: .
-    command: ["sh", "-c", "sleep 10 && python manage.py runserver 0.0.0.0:8000"]
-    volumes:
-      - .:/app
-    ports:
-      - "8000:8000"
-    depends_on:
-      - my-postgres
-
   my-postgres:
-    image: postgres
+    container_name: database-service
     environment:
-      POSTGRES_PASSWORD: mypassword
+      POSTGRES_PASSWORD: ${DJANGO_DB_PASSWORD}
+      POSTGRES_USER: ${DJANGO_DB_USER}
+      POSTGRES_DB: ${DJANGO_DB_NAME}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${DJANGO_DB_USER} -d ${DJANGO_DB_NAME}"]
       interval: 10s
       retries: 5
-    
+    image: postgres:latest
+    networks:
+      default: null
+    ports:
+      - 5433:5433
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    command: -p 5433
+    restart: unless-stopped
+
+volumes:
+  pgdata:
