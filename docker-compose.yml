@@ -21,17 +21,17 @@ services:
     command: -p 5433
     restart: unless-stopped
 
-web:
-    build: .
-    command: gunicorn your_project_name.wsgi:application --bind 0.0.0.0:8000
-    volumes:
-      - .:/code
-    ports:
-      - "8000:8000"
-    depends_on:
-      - db
-    env_file:
-      - .env
+  web:
+      build: .
+      command: gunicorn your_project_name.wsgi:application --bind 0.0.0.0:8000
+      volumes:
+        - .:/code
+      ports:
+        - "8000:8000"
+      depends_on:
+        - db
+      env_file:
+        - .env
 
 volumes:
   pgdata:
