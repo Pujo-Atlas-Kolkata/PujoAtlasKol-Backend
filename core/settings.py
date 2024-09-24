@@ -22,16 +22,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = get_random_secret_key()
-
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-
-ALLOWED_HOSTS = ["3.111.147.124",'localhost', '127.0.0.1']
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -80,6 +70,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     "corsheaders.middleware.CorsMiddleware",
+    "core.MiddleWares.middleware.LoggingMiddleware",
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -136,6 +127,16 @@ DATABASES = {
     }
 }
 
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = get_random_secret_key()
+DEBUG = config('DEBUG', cast=bool)
+ALLOWED_HOSTS = ["ec2-3-111-147-124.ap-south-1.compute.amazonaws.com",'localhost', '127.0.0.1']
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3001",
+#     "http://127.0.0.1:3001",
+# ]
+
+CORS_ALLOW_ALL_ORIGINS = True
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -155,48 +156,55 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3001",
-    "http://127.0.0.1:3001",
-]
-
 # logger
 
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    'filters': {
-        'require_debug_false': {
-            'level': 'DEBUG',
-            'class': 'django.utils.log.CallbackFilter',
-            'callback': lambda record: not record.filename.endswith('.mo'),
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
         },
     },
     'handlers': {
         'console': {
-            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
-            'filters': ['require_debug_false'],
+            'formatter': 'verbose',
         },
         'file': {
-            'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename':os.path.join(BASE_DIR, 'error.log'),
+            'filename': 'django_debug.log',
+            'formatter': 'verbose',
         },
     },
     'loggers': {
         'django': {
             'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-            'propagate': True,
+            'level': 'INFO',
         },
-        'pujo': {  
-            'handlers': ['console'],
+        'pujo': {
+            'handlers': ['console', 'file'],
             'level': 'DEBUG',
-            'propagate': True,
+            'propagate': False,
+        },
+        'user': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'reviews': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
         },
     },
 }
+
 
 
 

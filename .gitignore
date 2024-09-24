@@ -167,3 +167,4 @@ cython_debug/
 /venv
 **/__pycache__/
 example.http
+/staticfiles

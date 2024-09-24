@@ -358,6 +358,7 @@ class CustomTokenRefreshView(TokenRefreshView):
 
 class FavoritesViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedUser]
+    serializer_class = CollectionSerializer
 
     def add_favorite(self, request, *args, **kwargs):       
         self.check_object_permissions(request, request.user)
@@ -454,6 +455,7 @@ class FavoritesViewSet(viewsets.ModelViewSet):
 
 class WishlistViewSet(viewsets.ModelViewSet):
         permission_classes = [IsAuthenticatedUser]
+        serializer_class = CollectionSerializer
 
         def add_wishlist(self, request, *args, **kwargs):
             self.check_object_permissions(request, request.user)
@@ -549,6 +551,7 @@ class WishlistViewSet(viewsets.ModelViewSet):
             
 class SaveViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedUser]
+    serializer_class = CollectionSerializer
 
     def add_saved(self, request, *args, **kwargs):
         self.check_object_permissions(request, request.user)
@@ -648,6 +651,7 @@ class SaveViewSet(viewsets.ModelViewSet):
         
 class PandalVisitsViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedUser]
+    serializer_class = CollectionSerializer
 
     def add_visits(self, request, *args, **kwargs):
         self.check_object_permissions(request, request.user)
