@@ -19,6 +19,11 @@ from django.core.management.utils import get_random_secret_key
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/5.1/howto/static-files/
+
+STATIC_URL = '/static/'  # Add a leading slash and trailing slash
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -134,9 +139,13 @@ ALLOWED_HOSTS = ["api-atlas.ourkolkata.in",'localhost', '127.0.0.1',"ec2-3-111-1
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3001",
     "http://127.0.0.1:3001",
-    "https://api-atlas.ourkolkata.in",
+    "http://localhost:4321",
 ]
 
+# allowing all sub domains to access
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https?://.*\.ourkolkata\.in$",
+]
 # CORS_ALLOW_ALL_ORIGINS = True
 
 # Password validation
@@ -223,12 +232,6 @@ USE_TZ = True
 SESSION_COOKIE_SECURE = True
 
 CSRF_COOKIE_SECURE = True
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
-
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 
 # Default primary key field type
