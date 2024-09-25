@@ -130,13 +130,14 @@ DATABASES = {
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = get_random_secret_key()
 DEBUG = config('DEBUG', cast=bool)
-ALLOWED_HOSTS = ["ec2-3-111-147-124.ap-south-1.compute.amazonaws.com",'localhost', '127.0.0.1']
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3001",
-#     "http://127.0.0.1:3001",
-# ]
+ALLOWED_HOSTS = ["api-atlas.ourkolkata.in",'localhost', '127.0.0.1']
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+    "https://api-atlas.ourkolkata.in",
+]
 
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOW_ALL_ORIGINS = True
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
