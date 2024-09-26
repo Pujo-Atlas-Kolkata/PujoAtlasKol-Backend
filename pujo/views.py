@@ -170,41 +170,6 @@ class PujoViewSet(viewsets.ModelViewSet):
                 'status': ResponseStatus.FAIL.value
             }
             return Response(response_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-    @action(detail=False, methods=['post'], url_path='searched')
-    def increase_search_score(self, request, *args, **kwargs):
-        try:
-            serializer = SearchedPujoSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            uuid = serializer.validated_data['id']
-
-            # Retrieve the Pujo instance
-            pujo = self.get_queryset().filter(id=uuid).first()
-            if pujo is None:
-                response_data = {
-                    'result': 'Given Pujo does not exist',
-                    'status': ResponseStatus.FAIL.value
-                }
-                return Response(response_data, status=status.HTTP_404_NOT_FOUND)
-
-            # Increment the searchScore by 1
-            pujo.searchScore += 1
-            pujo.save()
-
-            updatedPujo = TrendingPujoSerializer(pujo)
-            # Prepare the response with updated information
-            response_data = {
-                'result': updatedPujo.data,
-                'status': ResponseStatus.SUCCESS.value
-            }
-            return Response(response_data, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            response_data = {
-                'result': str(e),
-                'status': ResponseStatus.FAIL.value
-            }
-            return Response(response_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
     def retrieve(self, request, uuid=None, *args, **kwargs):
         try:
@@ -306,3 +271,44 @@ class PujoViewSet(viewsets.ModelViewSet):
                 'status': ResponseStatus.FAIL.value
             }
             return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+
+
+class PujoTrendingIncreaseViewSet(viewsets.ModelViewSet):
+    queryset = Pujo.objects.all()
+    serializer_class = SearchedPujoSerializer
+    lookup_field = 'id'
+    
+    @action(detail=False, methods=['post'], url_path='searched')
+    def increase_search_score(self, request, *args, **kwargs):
+        try:
+            serializer = SearchedPujoSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            uuid = serializer.validated_data['id']
+
+            # Retrieve the Pujo instance
+            pujo = self.get_queryset().filter(id=uuid).first()
+            if pujo is None:
+                response_data = {
+                    'result': 'Given Pujo does not exist',
+                    'status': ResponseStatus.FAIL.value
+                }
+                return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+
+            # Increment the searchScore by 1
+            pujo.searchScore += 1
+            pujo.save()
+
+            updatedPujo = TrendingPujoSerializer(pujo)
+            # Prepare the response with updated information
+            response_data = {
+                'result': updatedPujo.data,
+                'status': ResponseStatus.SUCCESS.value
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            response_data = {
+                'result': str(e),
+                'status': ResponseStatus.FAIL.value
+            }
+            return Response(response_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
