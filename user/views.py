@@ -208,7 +208,7 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(response_data, status=status.HTTP_404_NOT_FOUND)
 class LoginView(APIView):
     permission_classes = [AllowAny]
-    serializer = UserLoginSerializer
+    serializer_class = UserLoginSerializer
 
     def post(self, request):
         serializer = UserLoginSerializer(data=request.data)
@@ -246,6 +246,7 @@ class LoginView(APIView):
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticatedUser]
+    serializer_class = UserLogoutSerializer
 
     def post(self, request):
         if not request.user.is_authenticated:

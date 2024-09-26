@@ -12,7 +12,7 @@ review_details = ReviewViewSet.as_view({
 })
 
 urlpatterns = [
-    path('', ReviewViewSet.as_view({'get':"get_all_reviews"}), name='all_reviews'),
+    path('list', ReviewViewSet.as_view({'get':"get_all_reviews"}), name='all_reviews'),
     path('create', review_create, name="review-create"),
     path('<uuid:uuid>', review_details, name="review_details"),
     path('user_reviews/<uuid:user_id>', ReviewViewSet.as_view({'get':"get_reviews_user_id"}), name="reviews-user"),
