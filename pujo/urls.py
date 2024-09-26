@@ -20,5 +20,6 @@ urlpatterns = [
     path('list', pujo_list, name='pujo-list'),  # URL for listing Pujos
     path('add', pujo_create, name='pujo-create'),  # URL for creating a new Pujo
     path('<uuid:uuid>', pujo_detail, name='pujo-detail'),  # URL for detail, update, and delete
-    path('list/trending', PujoViewSet.as_view({'get': 'trending'}), name='pujo-trending')
+    path('list/trending', PujoViewSet.as_view({'get': 'trending'}), name='pujo-trending'),
+    path('searched', PujoViewSet.as_view({'post':'increase_search_score'}), name='pujo-searched'),
 ]

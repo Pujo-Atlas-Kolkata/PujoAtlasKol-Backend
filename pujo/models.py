@@ -13,5 +13,13 @@ class Pujo(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(null = True)
 
+    def save(self, *args, **kwargs):
+        self.name = self.name.lower()
+        self.address = self.address.lower()
+        self.city = self.city.lower()
+        self.zone = self.zone.lower()
+        super(Pujo, self).save(*args, **kwargs)
+
+        
     def __str__(self):
         return self.name
