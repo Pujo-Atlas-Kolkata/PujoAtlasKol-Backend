@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'drf_yasg',
+    'drf_spectacular',
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
     "corsheaders",
@@ -51,9 +51,7 @@ INSTALLED_APPS = [
 AUTH_USER_MODEL = 'user.User'
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
 }
 
@@ -86,10 +84,20 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'core.urls'
 
 
-SWAGGER_SETTINGS = {
-    'USE_SESSION_AUTH': False,  # Disable session authentication
-    'LOGIN_URL': None,
-    'LOGOUT_URL': None,
+SPECTACULAR_SETTINGS = {
+    'TITLE': "Pujo Atlas Backend",
+    'DESCRIPTION': 'API documentation',
+    'VERSION': '1.1.0',
+    'SERVERS': [
+        {
+            'url': 'https://api-atlas.ourkolkata.in/',
+            'description': 'Production Server'
+        },
+        {
+            'url': 'http://localhost:3000/',
+            'description': 'Development Server'
+        },
+    ],
 }
 
 TEMPLATES = [
