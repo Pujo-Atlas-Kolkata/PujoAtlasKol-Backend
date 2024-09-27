@@ -80,7 +80,7 @@ class PujoViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='trending')
     def trending(self, request, *args, **kwargs):
         try:
-            trending_pujos = Pujo.objects.all().order_by('-searchScore')[:10]
+            trending_pujos = Pujo.objects.all().order_by('-search_score')[:10]
 
             serializer = TrendingPujoSerializer(trending_pujos, many=True)
             
