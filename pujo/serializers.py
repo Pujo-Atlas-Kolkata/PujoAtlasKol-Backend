@@ -3,9 +3,13 @@ from django.utils import timezone
 from .models import Pujo
 
 class PujoSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+    address = serializers.SerializerMethodField()
+    city = serializers.SerializerMethodField()
+    zone = serializers.SerializerMethodField()
     class Meta:
         model = Pujo
-        fields = ['id', 'name', 'city', 'address', 'lat','lon','zone']
+        fields = ['id', 'lat','lon','zone', 'city', 'name', 'address', 'created_at']
     
     def create(self, validated_data):
         return Pujo.objects.create(**validated_data)
@@ -16,19 +20,59 @@ class PujoSerializer(serializers.ModelSerializer):
         instance.address = validated_data.get('address', instance.address)
         instance.city = validated_data.get('city', instance.city)
         instance.zone = validated_data.get('zone', instance.zone)
+        instance.lat = validated_data.get('lat', instance.lat)
+        instance.lon = validated_data.get('lon', instance.lon)
+        # can not update search score from this serializer
+        validated_data.pop('search_score', None)
+        
         instance.updated_at = timezone.now()
         instance.save()  
         return instance
+    
+    def get_name(self, obj):
+        return obj.formatted_name()
+
+    def get_address(self, obj):
+        return obj.formatted_address()
+
+    def get_city(self, obj):
+        return obj.formatted_city()
+
+    def get_zone(self, obj):
+        return obj.formatted_zone()
 
 class TrendingPujoSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+    address = serializers.SerializerMethodField()
+    city = serializers.SerializerMethodField()
+    zone = serializers.SerializerMethodField()
     class Meta:
         model = Pujo
-        fields = "__all__"
+        fields = ['id', 'lat','lon','zone', 'city', 'name', 'address', 'search_score', 'created_at']
+
+    def get_name(self, obj):
+        return obj.formatted_name()
+
+    def get_address(self, obj):
+        return obj.formatted_address()
+
+    def get_city(self, obj):
+        return obj.formatted_city()
+
+    def get_zone(self, obj):
+        return obj.formatted_zone()
 
 class SearchedPujoSerializer(serializers.ModelSerializer):
     id = serializers.UUIDField()
     class Meta:
         model = Pujo
         fields = ['id']
+
+
+class searchPujoSerializer(serializers.ModelSerializer):
+    term = serializers.CharField()
+    class Meta:
+        model = Pujo
+        fields = ["term"]
 
     

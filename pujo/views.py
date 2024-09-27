@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Q, F
 from .models import Pujo
-from .serializers import PujoSerializer, TrendingPujoSerializer, SearchedPujoSerializer
+from .serializers import PujoSerializer, TrendingPujoSerializer, SearchedPujoSerializer, searchPujoSerializer
 from core.ResponseStatus import ResponseStatus
 import logging
 from user.permission import IsSuperOrAdminUser
@@ -11,6 +11,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.decorators import action
 from rest_framework import permissions
 import re
+from django.utils import timezone
 
 
 logger = logging.getLogger("pujo")
@@ -59,95 +60,21 @@ class PujoViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         try:
             queryset = self.get_queryset()
-            search_params = request.query_params
-
             # Check if query parameters are provided
-            if not search_params:
-                # If no parameters are provided, return all records
-                serializer = self.get_serializer(queryset, many=True)
-                response_data = {
-                    'result': serializer.data,
-                    'status': ResponseStatus.SUCCESS.value
-                }
-                return Response(response_data, status=status.HTTP_200_OK)
-
-            # Initialize a flag to track if any valid parameters were found
-            valid_query_found = False
-            allowed_query_params = ['name', 'address', 'city', 'zone']
-            search_params_filtered = {key: value for key, value in search_params.items() if key in allowed_query_params}
-
-            # Ensure only one valid search parameter is provided
-            if len(search_params_filtered) != 1:
-                response_data = {
-                    'result': {"message": "Only one search query param allowed at a time", 
-                            "allowed_query_params": allowed_query_params},
-                    'status': ResponseStatus.SUCCESS.value
-                }
-                return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
-
-            # Check for valid query parameters
-            if 'name' in search_params:
-                search_value = search_params.get('name').strip()    
-                # Generate the regex patterns based on the address
-                regex_combinations = generate_regex_combinations(search_value)
-                # Initialize an empty QuerySet for combined results
-                results = Pujo.objects.none()  # An empty QuerySet of the Pujo model
-                # Loop through each regex pattern and filter the queryset
-                for regex in regex_combinations:
-                    # Perform the regex search with case-insensitive matching
-                    queryset = Pujo.objects.filter(name__iregex=regex) 
-                    # Combine results from all regex matches (union of all results)
-                    results = results | queryset
-                valid_query_found = True
-            elif 'address' in search_params:
-                search_value = search_params.get('address').strip()    
-                regex_combinations = generate_regex_combinations(search_value)
-                results = Pujo.objects.none()
-                for regex in regex_combinations:
-                    queryset = Pujo.objects.filter(address__iregex=regex) 
-                    results = results | queryset
-                valid_query_found = True
-            elif 'city' in search_params:
-                search_value = search_params.get('city').strip()    
-                regex_combinations = generate_regex_combinations(search_value)
-                results = Pujo.objects.none()
-                for regex in regex_combinations:
-                    queryset = Pujo.objects.filter(city__iregex=regex) 
-                    results = results | queryset
-                valid_query_found = True
-            elif 'zone' in search_params:
-                search_value = search_params.get('zone').strip()    
-                regex_combinations = generate_regex_combinations(search_value)
-                results = Pujo.objects.none()
-                for regex in regex_combinations:
-                    queryset = Pujo.objects.filter(zone__iregex=regex) 
-                    results = results | queryset
-                valid_query_found = True
-
-            # If no valid query parameters were found, return an empty list
-            if not valid_query_found:
-                response_data = {
-                    'result': {"message":"Not a valid query param","allowed_query_params":allowed_query_params},
-                    'status': ResponseStatus.SUCCESS.value
-                }
-                return Response(response_data, status=status.HTTP_200_OK)
-
-            filtered_results = results.distinct('id')
-            # Serialize the filtered queryset
-            serializer = self.get_serializer(filtered_results, many=True)
+            # If no parameters are provided, return all records
+            serializer = self.get_serializer(queryset, many=True)
             response_data = {
-                'result': serializer.data,
-                'status': ResponseStatus.SUCCESS.value
+                    'result': serializer.data,
+                    'message':'Pujo list successfully fetched',
+                    'status': ResponseStatus.SUCCESS.value
             }
-
             return Response(response_data, status=status.HTTP_200_OK)
-
         except Exception as e:
-            logger.error(f"Error fetching Pujo list: {str(e)}")
             response_data = {
                 'error': str(e),
                 'status': ResponseStatus.FAIL.value
             }
+            logger.error(f"Error: {response_data['error']}")
             return Response(response_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     @action(detail=False, methods=['get'], url_path='trending')
@@ -159,16 +86,17 @@ class PujoViewSet(viewsets.ModelViewSet):
             
             response_data = {
                 'result': serializer.data,
+                'message':'Trending pujo list fetched',
                 'status': ResponseStatus.SUCCESS.value
             }
             return Response(response_data, status=status.HTTP_200_OK)
         
         except Exception as e:
-            logger.error(f"Error fetching trending Pujos: {str(e)}")
             response_data = {
                 'error': str(e),
                 'status': ResponseStatus.FAIL.value
             }
+            logger.error(f"Error: {response_data['error']}")
             return Response(response_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
     def retrieve(self, request, uuid=None, *args, **kwargs):
@@ -178,9 +106,11 @@ class PujoViewSet(viewsets.ModelViewSet):
             pujo = self.get_queryset().filter(id=uuid).first()
             if pujo is None:
                 response_data = {
-                'result': 'Given Pujo does not exist',
+                'error': 'Given Pujo does not exist',
                 'status': ResponseStatus.FAIL.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_404_NOT_FOUND)
             
             serializer = self.get_serializer(pujo)
@@ -191,9 +121,11 @@ class PujoViewSet(viewsets.ModelViewSet):
             return Response(response_data, status=status.HTTP_200_OK)
         except Pujo.DoesNotExist:
             response_data = {
-                'result': 'Given Pujo does not exist',
+                'error': 'Given Pujo does not exist',
                 'status': ResponseStatus.FAIL.value
             }
+            user_id = request.user.id if request.user.is_authenticated else None
+            logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
             return Response(response_data, status=status.HTTP_404_NOT_FOUND)
 
     def create(self, request, *args, **kwargs):
@@ -204,14 +136,19 @@ class PujoViewSet(viewsets.ModelViewSet):
             serializer.save()
             response_data = {
                 'result': {'id': serializer.data["id"]},
+                'message':'Pujo created',
                 'status': ResponseStatus.SUCCESS.value
             }
+            user_id = request.user.id if request.user.is_authenticated else None
+            logger.info(f"Success: {response_data['message']}", extra={'user_id': user_id})
             return Response(response_data, status=status.HTTP_201_CREATED)
         else:
             response_data = {
                 'error': serializer.errors,
                 'status': ResponseStatus.FAIL.value
             }
+            user_id = request.user.id if request.user.is_authenticated else None
+            logger.error(f"Error: {str(response_data['error'])}", extra={'user_id': user_id})
             return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, uuid=None, *args, **kwargs):
@@ -221,9 +158,11 @@ class PujoViewSet(viewsets.ModelViewSet):
             pujo = self.get_queryset().filter(id=uuid).first()
             if pujo is None:
                 response_data = {
-                'result': 'Given Pujo does not exist',
+                'error': 'Given Pujo does not exist',
                 'status': ResponseStatus.FAIL.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_404_NOT_FOUND)
             
             serializer = self.get_serializer(pujo, data=request.data)
@@ -231,20 +170,27 @@ class PujoViewSet(viewsets.ModelViewSet):
                 serializer.save()
                 response_data = {
                     'result': serializer.data,
+                    'message':f'Pujo updated',
                     'status': ResponseStatus.SUCCESS.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.info(f"Success: {response_data['message']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_200_OK)
             else:
                 response_data = {
                     'error': serializer.errors,
                     'status': ResponseStatus.FAIL.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {str(response_data['error'])}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         except Pujo.DoesNotExist:
             response_data = {
-                'result': 'Given Pujo does not exist',
+                'error': 'Given Pujo does not exist',
                 'status': ResponseStatus.FAIL.value
             }
+            user_id = request.user.id if request.user.is_authenticated else None
+            logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
             return Response(response_data, status=status.HTTP_404_NOT_FOUND)
 
     def destroy(self, request, uuid=None, *args, **kwargs):
@@ -257,19 +203,25 @@ class PujoViewSet(viewsets.ModelViewSet):
                 'error': 'Given Pujo does not exist',
                 'status': ResponseStatus.FAIL.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_404_NOT_FOUND)
             
             pujo.delete()
             response_data = {
-                'result': "Delete successful",
+                'result': f"Delete successful for {str(uuid)}",
                 'status': ResponseStatus.SUCCESS.value
             }
+            user_id = request.user.id if request.user.is_authenticated else None
+            logger.info(f"Success: {response_data['result']}", extra={'user_id': user_id})
             return Response(response_data, status=status.HTTP_200_OK)
         except Pujo.DoesNotExist:
             response_data = {
                 'error': 'Given Pujo does not exist',
                 'status': ResponseStatus.FAIL.value
             }
+            user_id = request.user.id if request.user.is_authenticated else None
+            logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
             return Response(response_data, status=status.HTTP_404_NOT_FOUND)
 
 
@@ -289,13 +241,15 @@ class PujoTrendingIncreaseViewSet(viewsets.ModelViewSet):
             pujo = self.get_queryset().filter(id=uuid).first()
             if pujo is None:
                 response_data = {
-                    'result': 'Given Pujo does not exist',
+                    'error': 'Given Pujo does not exist',
                     'status': ResponseStatus.FAIL.value
                 }
+                logger.error(f"Error: {response_data['error']}")
                 return Response(response_data, status=status.HTTP_404_NOT_FOUND)
 
             # Increment the searchScore by 1
-            pujo.searchScore += 1
+            pujo.search_score += 1
+            pujo.updated_at = timezone.now()
             pujo.save()
 
             updatedPujo = TrendingPujoSerializer(pujo)
@@ -308,7 +262,59 @@ class PujoTrendingIncreaseViewSet(viewsets.ModelViewSet):
 
         except Exception as e:
             response_data = {
-                'result': str(e),
+                'error': str(e),
                 'status': ResponseStatus.FAIL.value
             }
+            logger.error(f"Error: {response_data['error']}")
             return Response(response_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class PujoSearchViewSet(viewsets.ModelViewSet):
+    serializer_class = searchPujoSerializer
+
+    def search_pujo(self, request, *args, **kwargs):
+        try:
+            # Validate the input data
+            serializer = self.get_serializer(data=request.data)
+            if serializer.is_valid():
+                search_term = serializer.validated_data['term'].strip()
+
+                regex_combinations = generate_regex_combinations(search_term)
+
+                # Initialize an empty QuerySet for combined results
+                results = Pujo.objects.none()
+
+                query_fields = ['name', 'address', 'city', 'zone']
+                for regex in regex_combinations:
+                    query_filter = Q()
+                    for field in query_fields:
+                        query_filter |= Q(**{f"{field}__iregex": regex})
+
+                    results = results | Pujo.objects.filter(query_filter)
+
+                # Remove duplicate entries based on the 'id'
+                filtered_results = results.distinct("id")
+
+                # Serialize the filtered queryset
+                serializer = PujoSerializer(filtered_results, many=True)
+                response_data = {
+                    'result': serializer.data,
+                    'status': ResponseStatus.SUCCESS.value
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
+            else:
+                logger.error(f"Error: {str(serializer.errors)}")
+                return Response({
+                    'error': serializer.errors,
+                    'status': ResponseStatus.FAIL.value
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            response_data = {
+                'error': str(e),
+                'status': ResponseStatus.FAIL.value
+            }
+            logger.error(f"Error: {response_data['error']}")
+            return Response(response_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+                

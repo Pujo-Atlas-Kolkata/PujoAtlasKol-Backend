@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     "corsheaders",
     'import_export',
+    'Log',
     'pandal',
     'pujo',
     'user',
@@ -51,6 +52,9 @@ INSTALLED_APPS = [
 AUTH_USER_MODEL = 'user.User'
 
 REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
 }
@@ -144,17 +148,18 @@ DATABASES = {
 SECRET_KEY = get_random_secret_key()
 DEBUG = config('DEBUG', cast=bool)
 ALLOWED_HOSTS = ["api-atlas.ourkolkata.in",'localhost', '127.0.0.1',"ec2-3-111-147-124.ap-south-1.compute.amazonaws.com"]
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3001",
-    "http://127.0.0.1:3001",
-    "http://localhost:4321",
-]
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3001",
+#     "http://127.0.0.1:3001",
+#     "http://localhost:4321",
+# ]
 
 # allowing all sub domains to access
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^https?://.*\.ourkolkata\.in$",
-]
-# CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOWED_ORIGIN_REGEXES = [
+#     r"^https?://.*\.ourkolkata\.in$",
+# ]
+
+CORS_ALLOW_ALL_ORIGINS = True
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -199,24 +204,28 @@ LOGGING = {
             'filename': 'django_debug.log',
             'formatter': 'verbose',
         },
+         'database': {
+            'class': 'Log.handlers.DatabaseLogHandler',
+            'formatter': 'verbose',
+        },
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console', 'file' , 'database'],
             'level': 'INFO',
         },
         'pujo': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console', 'file' , 'database'],
             'level': 'INFO',
             'propagate': False,
         },
         'user': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console', 'file' , 'database'],
             'level': 'INFO',
             'propagate': False,
         },
         'reviews': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console', 'file' , 'database'],
             'level': 'INFO',
             'propagate': False,
         },

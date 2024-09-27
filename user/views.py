@@ -16,6 +16,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.decorators import action
+from django.core.management import call_command
 
 logger = logging.getLogger("user")
 
@@ -41,6 +42,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 'error': f"The following fields are required: {', '.join(missing_fields)}",
                 'status': ResponseStatus.FAIL.value
                 }
+                logger.error(f"Error: {response_data['error']}")
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
             
             serializer = self.get_serializer(data=request.data)
@@ -50,19 +52,23 @@ class UserViewSet(viewsets.ModelViewSet):
                     'result':'User registered successfully',
                     'status':ResponseStatus.SUCCESS.value
                 }
+                logger.info(f"Success: {response_data['result']}")
                 return Response(response_data, status=status.HTTP_201_CREATED)
             else:
                 response_data={
                     'error':serializer.errors,
                     'status': ResponseStatus.FAIL.value
                 }
+                logger.error(f"Error: {(response_data['error'])}")
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:  # Catch any other unexpected exceptions
             response_data = {
-                'result': str(e),
+                'error': str(e),
                 'status': ResponseStatus.FAIL.value
             }
+            logger.error(f"Error: {str(response_data['error'])}")
             return Response(response_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
     @action(detail=False, methods=['get'], url_path='get_user_details')
     def get_user_details(self, request, user_id=None, *args, **kwargs):
         try:
@@ -72,19 +78,26 @@ class UserViewSet(viewsets.ModelViewSet):
                 'error':"User not found",
                 'status': ResponseStatus.FAIL.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_404_NOT_FOUND)
             else:
                 serializer = UserDetailsSerializer(user)
                 response_data = {
                 'result': serializer.data,
+                'message':'User Details fetched successfully',
                 'status': ResponseStatus.SUCCESS.value
             }
+            user_id = request.user.id if request.user.is_authenticated else None
+            logger.info(f"Success: {response_data['message']}", extra={'user_id': user_id})
             return Response(response_data, status=status.HTTP_200_OK)
         except Exception as e:
             response_data = {
                 'error': str(e),
                 'status': ResponseStatus.FAIL.value
             }
+            user_id = request.user.id if request.user.is_authenticated else None
+            logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
             return Response(response_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def retrieve(self, request, uuid, *args, **kwargs):
@@ -96,19 +109,26 @@ class UserViewSet(viewsets.ModelViewSet):
                 'error':"User does not exist",
                 'status': ResponseStatus.FAIL.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_404_NOT_FOUND)
             else:
                 serializer = self.get_serializer(user)
                 response_data = {
                     'result':serializer.data,
+                    'message':'User data fetched successfully',
                     'status':ResponseStatus.SUCCESS.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.info(f"Success: {response_data['message']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_200_OK)
         except User.DoesNotExist:
             response_data = {
                 'result':'User does not exist',
                 'status':ResponseStatus.FAIL.value
             }
+            user_id = request.user.id if request.user.is_authenticated else None
+            logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
             return Response(response_data, status=status.HTTP_404_NOT_FOUND)
     
     def update(self, request, uuid=None, *args, **kwargs):
@@ -119,6 +139,8 @@ class UserViewSet(viewsets.ModelViewSet):
                 'error': "User does not exist",
                 'status': ResponseStatus.FAIL.value
             }
+            user_id = request.user.id if request.user.is_authenticated else None
+            logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
             return Response(response_data, status=status.HTTP_404_NOT_FOUND)
 
         
@@ -129,14 +151,19 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer.save(updated_at=timezone.now())
             response_data = {
                 'result': serializer.data,
+                'message':'User updated successfully',
                 'status': ResponseStatus.SUCCESS.value
             }
+            user_id = request.user.id if request.user.is_authenticated else None
+            logger.info(f"Error: {response_data['message']}", extra={'user_id': user_id})
             return Response(response_data, status=status.HTTP_200_OK)
         else:
             response_data = {
                 'error': serializer.errors,
                 'status': ResponseStatus.FAIL.value
             }
+            user_id = request.user.id if request.user.is_authenticated else None
+            logger.error(f"Error: {str(response_data['error'])}", extra={'user_id': user_id})
             return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
         
@@ -149,6 +176,8 @@ class UserViewSet(viewsets.ModelViewSet):
                 'error':"User does not exist",
                 'status': ResponseStatus.FAIL.value
             }
+            user_id = request.user.id if request.user.is_authenticated else None
+            logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
             return Response(response_data, status=status.HTTP_404_NOT_FOUND)
         else:
             logout_view = LogoutView.as_view()
@@ -157,6 +186,8 @@ class UserViewSet(viewsets.ModelViewSet):
 
             # Log the response if necessary
             if logout_response.status_code != status.HTTP_200_OK:
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: Failed to logout user", extra={'user_id': user_id})
                 return Response({
                     'error': 'Failed to log out the user',
                     'status': ResponseStatus.FAIL.value
@@ -168,6 +199,8 @@ class UserViewSet(viewsets.ModelViewSet):
                 'result': 'User deleted successfully',
                 'status': 'success'
             }
+            user_id = request.user.id if request.user.is_authenticated else None
+            logger.info(f"Success: {response_data['result']}", extra={'user_id': user_id})
             return Response(response_data, status=status.HTTP_204_NO_CONTENT)
 
     def partial_update(self, request, uuid=None, *args, **kwargs):
@@ -180,6 +213,8 @@ class UserViewSet(viewsets.ModelViewSet):
                     'error':"User does not exist",
                     'status': ResponseStatus.FAIL.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_404_NOT_FOUND)
             else:
                 for field in ['user_type', 'last_login', 'is_superuser', 'is_staff', 'date_joined',
@@ -191,20 +226,27 @@ class UserViewSet(viewsets.ModelViewSet):
                     serializer.save(updated_at=timezone.now())
                     response_data = {
                         'result': serializer.data,
+                        'message':'User updated successfully',
                         'status': ResponseStatus.SUCCESS.value
                     }
+                    user_id = request.user.id if request.user.is_authenticated else None
+                    logger.info(f"Success: {response_data['message']}", extra={'user_id': user_id})
                     return Response(response_data, status=status.HTTP_200_OK)
                 else:
                     response_data = {
                         'error': serializer.errors,
                         'status': ResponseStatus.FAIL.value
                     }
+                    user_id = request.user.id if request.user.is_authenticated else None
+                    logger.error(f"Error: {str(response_data['error'])}", extra={'user_id': user_id})
                     return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         except User.DoesNotExist:
             response_data = {
-                'result': 'Given user does not exist',
+                'error': 'Given user does not exist',
                 'status': ResponseStatus.FAIL.value
             }
+            user_id = request.user.id if request.user.is_authenticated else None
+            logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
             return Response(response_data, status=status.HTTP_404_NOT_FOUND)
 class LoginView(APIView):
     permission_classes = [AllowAny]
@@ -223,25 +265,28 @@ class LoginView(APIView):
 
                 response_data = {
                     'result': {
-                        'message': 'Logged in successfully',
                         'user': user_data,
                         'refresh': str(refresh),
                         'access': str(refresh.access_token),
                     },
+                    'message': 'Logged in successfully',
                     'status': ResponseStatus.SUCCESS.value
                 }
+                logger.info(f"Success: {response_data['message']}")
                 return Response(response_data, status=status.HTTP_200_OK)
             else:
                 response_data = {
                     'error': 'Invalid credentials',
                     'status': ResponseStatus.FAIL.value
                 }
+                logger.info(f"Error: {response_data['error']}")
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         else:
                     response_data = {
                         'error': serializer.errors,
                         'status': ResponseStatus.FAIL.value
                     }
+                    logger.info(f"Error: {str(response_data['error'])}")
                     return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
 class LogoutView(APIView):
@@ -254,6 +299,7 @@ class LogoutView(APIView):
                     'error': 'No user is currently logged in',
                     'status': ResponseStatus.FAIL.value
                 }
+                logger.info(f"Error: {response_data['error']}")
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         
         serializer = UserLogoutSerializer(data=request.data)
@@ -266,34 +312,47 @@ class LogoutView(APIView):
                     'error': f'User {username} is not logged in',
                     'status': ResponseStatus.FAIL.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
             # If authenticated and username matches
             token = request.META.get('HTTP_AUTHORIZATION').split()[1]
             if not token:
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: Token not found", extra={'user_id': user_id})
                 return Response({
                     'error': 'Token not found',
                     'status': ResponseStatus.FAIL.value
                 }, status=status.HTTP_400_BAD_REQUEST)
             else:
                 if BlacklistedToken.objects.filter(token=token).exists():
+                    user_id = request.user.id if request.user.is_authenticated else None
+                    logger.error(f"Error: Token already invalidated", extra={'user_id': user_id})
                     return Response({'error': 'Token is already invalidated','status': ResponseStatus.FAIL.value}, status=status.HTTP_400_BAD_REQUEST)
 
                 try:
                     BlacklistedToken.objects.create(token=token)
                 except Exception as e:
+                    user_id = request.user.id if request.user.is_authenticated else None
+                    logger.error(f"Error: {str(e)}", extra={'user_id': user_id})
                     return Response({'error': str(e), 'status': ResponseStatus.FAIL.value}, status=status.HTTP_400_BAD_REQUEST)
 
                 response_data = {
                     'result': 'Logged out successfully',
                     'status': ResponseStatus.SUCCESS.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.info(f"Success: {response_data['result']}", extra={'user_id': user_id})
+                call_command('delete_old_logs')
                 return Response(response_data, status=status.HTTP_200_OK)
         else:
                     response_data = {
                         'error': serializer.errors,
                         'status': ResponseStatus.FAIL.value
                     }
+                    user_id = request.user.id if request.user.is_authenticated else None
+                    logger.error(f"Error: {str(response_data['error'])}", extra={'user_id': user_id})
                     return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         
 class CustomTokenRefreshView(TokenRefreshView):
@@ -375,6 +434,8 @@ class FavoritesViewSet(viewsets.ModelViewSet):
                     "error": "User does not exist",
                     'status': ResponseStatus.FAIL.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
             
             favorite_item = serializer.validated_data['pujo_id']
@@ -384,6 +445,8 @@ class FavoritesViewSet(viewsets.ModelViewSet):
                         "error": "No favorite item provided",
                         'status': ResponseStatus.FAIL.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -392,20 +455,27 @@ class FavoritesViewSet(viewsets.ModelViewSet):
                         'error': f"This pujo is already {user.username}'s favorite",
                         'status': ResponseStatus.FAIL.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_406_NOT_ACCEPTABLE)
             else:    
                 user.favorites.append(favorite_item)
                 user.save()
                 response_data = {
                         'result': user.favorites,
+                        'message':'User Favorite set',
                         'status': ResponseStatus.SUCCESS.value
                     }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.info(f"Success: {response_data['message']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_200_OK)
         else:
             response_data = {
                         'error': serializer.errors,
                         'status': ResponseStatus.FAIL.value
             }
+            user_id = request.user.id if request.user.is_authenticated else None
+            logger.error(f"Error: {str(response_data['error'])}", extra={'user_id': user_id})
             return Response(response_data, status=status.HTTP_406_NOT_ACCEPTABLE)
     
     def remove_favorite(self, request, *args, **kwargs):
@@ -422,6 +492,8 @@ class FavoritesViewSet(viewsets.ModelViewSet):
                     "error": "User does not exist",
                     'status': ResponseStatus.FAIL.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         
             favorite_item = serializer.validated_data['pujo_id']
@@ -431,6 +503,8 @@ class FavoritesViewSet(viewsets.ModelViewSet):
                     "error": "No favorite item provided",
                     'status': ResponseStatus.FAIL.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
  
             if favorite_item in user.favorites:
@@ -438,20 +512,27 @@ class FavoritesViewSet(viewsets.ModelViewSet):
                 user.save()
                 response_data = {
                 'result': user.favorites,
+                'message':'User favorite removed',
                 'status': ResponseStatus.SUCCESS.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.info(f"Success: {response_data['message']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_200_OK)
             else:
                 response_data = {
                     "error": "Favorite item not found",
                     'status': ResponseStatus.FAIL.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         else:
             response_data = {
                         'error': serializer.errors,
                         'status': ResponseStatus.FAIL.value
             }
+            user_id = request.user.id if request.user.is_authenticated else None
+            logger.error(f"Error: {str(response_data['error'])}", extra={'user_id': user_id})
             return Response(response_data, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 class WishlistViewSet(viewsets.ModelViewSet):
@@ -472,6 +553,8 @@ class WishlistViewSet(viewsets.ModelViewSet):
                         "error": "User does not exist",
                         'status': ResponseStatus.FAIL.value
                     }
+                    user_id = request.user.id if request.user.is_authenticated else None
+                    logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                     return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         
                 item = serializer.validated_data['pujo_id']
@@ -481,6 +564,8 @@ class WishlistViewSet(viewsets.ModelViewSet):
                             "error": "No wishlist item provided",
                             'status': ResponseStatus.FAIL.value
                     }
+                    user_id = request.user.id if request.user.is_authenticated else None
+                    logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                     return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
                 if item in user.wishlist:
@@ -488,20 +573,27 @@ class WishlistViewSet(viewsets.ModelViewSet):
                             'error': f"This pujo is already {user.username}'s wishlist",
                             'status': ResponseStatus.FAIL.value
                     }
+                    user_id = request.user.id if request.user.is_authenticated else None
+                    logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                     return Response(response_data, status=status.HTTP_406_NOT_ACCEPTABLE)
                 else:    
                     user.wishlist.append(item)
                     user.save()
                     response_data = {
                             'result': user.wishlist,
+                            'message':'Item added to user wishlist',
                             'status': ResponseStatus.SUCCESS.value
                         }
+                    user_id = request.user.id if request.user.is_authenticated else None
+                    logger.info(f"Success: {response_data['message']}", extra={'user_id': user_id})
                     return Response(response_data, status=status.HTTP_200_OK)
             else:
                 response_data = {
                             'error': serializer.errors,
                             'status': ResponseStatus.FAIL.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {str(response_data['error'])}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_406_NOT_ACCEPTABLE)
             
         def remove_wishlist(self, request, *args, **kwargs):
@@ -518,6 +610,8 @@ class WishlistViewSet(viewsets.ModelViewSet):
                         "error": "User does not exist",
                         'status': ResponseStatus.FAIL.value
                     }
+                    user_id = request.user.id if request.user.is_authenticated else None
+                    logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                     return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         
                 item = serializer.validated_data['pujo_id']
@@ -527,6 +621,8 @@ class WishlistViewSet(viewsets.ModelViewSet):
                         "error": "No wishlist item provided",
                         'status': ResponseStatus.FAIL.value
                     }
+                    user_id = request.user.id if request.user.is_authenticated else None
+                    logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                     return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
                 if item in user.wishlist:
@@ -534,20 +630,27 @@ class WishlistViewSet(viewsets.ModelViewSet):
                     user.save()
                     response_data = {
                     'result': user.wishlist,
+                    'message':'Item removed',
                     'status': ResponseStatus.SUCCESS.value
                     }
+                    user_id = request.user.id if request.user.is_authenticated else None
+                    logger.info(f"Success: {response_data['message']}", extra={'user_id': user_id})
                     return Response(response_data, status=status.HTTP_200_OK)
                 else:
                     response_data = {
                         "error": "wishlist item not found",
                         'status': ResponseStatus.FAIL.value
                     }
+                    user_id = request.user.id if request.user.is_authenticated else None
+                    logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                     return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
             else:
                 response_data = {
                             'error': serializer.errors,
                             'status': ResponseStatus.FAIL.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {str(response_data['error'])}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_406_NOT_ACCEPTABLE)
             
 class SaveViewSet(viewsets.ModelViewSet):
@@ -568,6 +671,8 @@ class SaveViewSet(viewsets.ModelViewSet):
                         "error": "User does not exist",
                         'status': ResponseStatus.FAIL.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         
             item = serializer.validated_data['pujo_id']
@@ -577,6 +682,8 @@ class SaveViewSet(viewsets.ModelViewSet):
                             "error": "No item to save",
                             'status': ResponseStatus.FAIL.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -585,20 +692,27 @@ class SaveViewSet(viewsets.ModelViewSet):
                             'error': f"This pujo is already {user.username}'s saves",
                             'status': ResponseStatus.FAIL.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_406_NOT_ACCEPTABLE)
             else:    
                 user.saves.append(item)
                 user.save()
                 response_data = {
                             'result': user.saves,
+                            'message':'item saved',
                             'status': ResponseStatus.SUCCESS.value
                     }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.info(f"Success: {response_data['message']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_200_OK)
         else:
             response_data = {
                             'error': serializer.errors,
                             'status': ResponseStatus.FAIL.value
             }
+            user_id = request.user.id if request.user.is_authenticated else None
+            logger.error(f"Error: {str(response_data['error'])}", extra={'user_id': user_id})
             return Response(response_data, status=status.HTTP_406_NOT_ACCEPTABLE)
     
 
@@ -616,6 +730,8 @@ class SaveViewSet(viewsets.ModelViewSet):
                         "error": "User does not exist",
                         'status': ResponseStatus.FAIL.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         
             item = serializer.validated_data['pujo_id']
@@ -626,6 +742,8 @@ class SaveViewSet(viewsets.ModelViewSet):
                     "error": "No item to save",
                     'status': ResponseStatus.FAIL.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
                 
@@ -634,20 +752,27 @@ class SaveViewSet(viewsets.ModelViewSet):
                 user.save()
                 response_data = {
                 'result': user.saves,
+                'message':'Item removed',
                 'status': ResponseStatus.SUCCESS.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {response_data['message']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_200_OK)
             else:
                 response_data = {
                 "error": "save item not found",
                 'status': ResponseStatus.FAIL.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         else:
             response_data = {
                             'error': serializer.errors,
                             'status': ResponseStatus.FAIL.value
             }
+            user_id = request.user.id if request.user.is_authenticated else None
+            logger.error(f"Error: {str(response_data['error'])}", extra={'user_id': user_id})
             return Response(response_data, status=status.HTTP_406_NOT_ACCEPTABLE)
         
 class PandalVisitsViewSet(viewsets.ModelViewSet):
@@ -668,6 +793,8 @@ class PandalVisitsViewSet(viewsets.ModelViewSet):
                         "error": "User does not exist",
                         'status': ResponseStatus.FAIL.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         
             item = serializer.validated_data['pujo_id']
@@ -677,6 +804,8 @@ class PandalVisitsViewSet(viewsets.ModelViewSet):
                             "error": "No pandal visits",
                             'status': ResponseStatus.FAIL.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -685,18 +814,25 @@ class PandalVisitsViewSet(viewsets.ModelViewSet):
                             'error': f"This pandal has already been visited by {user.username}",
                             'status': ResponseStatus.FAIL.value
                 }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_406_NOT_ACCEPTABLE)
             else:    
                 user.pandal_visits.append(item)
                 user.save()
                 response_data = {
                             'result': user.pandal_visits,
+                            'message':'pandal visited by user',
                             'status': ResponseStatus.SUCCESS.value
                     }
+                user_id = request.user.id if request.user.is_authenticated else None
+                logger.error(f"Error: {response_data['message']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_200_OK)
         else:
             response_data = {
                             'error': serializer.errors,
                             'status': ResponseStatus.FAIL.value
             }
+            user_id = request.user.id if request.user.is_authenticated else None
+            logger.error(f"Error: {str(response_data['error'])}", extra={'user_id': user_id})
             return Response(response_data, status=status.HTTP_406_NOT_ACCEPTABLE)
