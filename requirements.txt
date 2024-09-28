@@ -11,7 +11,7 @@ tablib==3.5.0
 typing_extensions==4.12.2
 psycopg2-binary>=2.9,<3.0
 python-decouple
-drf-yasg
+drf-spectacular
 setuptools
 djangorestframework-simplejwt
 django-cors-headers

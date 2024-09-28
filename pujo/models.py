@@ -9,9 +9,28 @@ class Pujo(models.Model):
     address = models.TextField()
     city = models.TextField()
     zone = models.CharField(max_length=100)
-    searchScore=models.IntegerField(default=0)
+    search_score=models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(null = True)
 
+    def save(self, *args, **kwargs):
+        self.name = self.name.lower()
+        self.address = self.address.lower()
+        self.city = self.city.lower()
+        self.zone = self.zone.lower()
+        super(Pujo, self).save(*args, **kwargs)
+
+    def formatted_name(self):
+        return self.name.title()
+
+    def formatted_address(self):
+        return self.address.title()
+
+    def formatted_city(self):
+        return self.city.title()
+
+    def formatted_zone(self):
+        return self.zone.upper()
+
     def __str__(self):
-        return self.name
+        return self.formatted_name()

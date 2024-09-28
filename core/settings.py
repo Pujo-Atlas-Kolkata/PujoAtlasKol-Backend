@@ -19,6 +19,11 @@ from django.core.management.utils import get_random_secret_key
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/5.1/howto/static-files/
+
+STATIC_URL = '/static/'  # Add a leading slash and trailing slash
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -32,11 +37,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'drf_yasg',
+    'drf_spectacular',
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
     "corsheaders",
     'import_export',
+    'Log',
     'pandal',
     'pujo',
     'user',
@@ -49,6 +55,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
 }
 
@@ -81,10 +88,20 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'core.urls'
 
 
-SWAGGER_SETTINGS = {
-    'USE_SESSION_AUTH': False,  # Disable session authentication
-    'LOGIN_URL': None,
-    'LOGOUT_URL': None,
+SPECTACULAR_SETTINGS = {
+    'TITLE': "Pujo Atlas Backend",
+    'DESCRIPTION': 'API documentation',
+    'VERSION': '1.1.0',
+    'SERVERS': [
+        {
+            'url': 'https://api-atlas.ourkolkata.in/',
+            'description': 'Production Server'
+        },
+        {
+            'url': 'http://localhost:3000/',
+            'description': 'Development Server'
+        },
+    ],
 }
 
 TEMPLATES = [
@@ -130,10 +147,16 @@ DATABASES = {
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = get_random_secret_key()
 DEBUG = config('DEBUG', cast=bool)
-ALLOWED_HOSTS = ["ec2-3-111-147-124.ap-south-1.compute.amazonaws.com",'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ["api-atlas.ourkolkata.in",'localhost', '127.0.0.1',"ec2-3-111-147-124.ap-south-1.compute.amazonaws.com"]
 # CORS_ALLOWED_ORIGINS = [
 #     "http://localhost:3001",
 #     "http://127.0.0.1:3001",
+#     "http://localhost:4321",
+# ]
+
+# allowing all sub domains to access
+# CORS_ALLOWED_ORIGIN_REGEXES = [
+#     r"^https?://.*\.ourkolkata\.in$",
 # ]
 
 CORS_ALLOW_ALL_ORIGINS = True
@@ -181,25 +204,29 @@ LOGGING = {
             'filename': 'django_debug.log',
             'formatter': 'verbose',
         },
+         'database': {
+            'class': 'Log.handlers.DatabaseLogHandler',
+            'formatter': 'verbose',
+        },
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console', 'file' , 'database'],
             'level': 'INFO',
         },
         'pujo': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
+            'handlers': ['console', 'file' , 'database'],
+            'level': 'INFO',
             'propagate': False,
         },
         'user': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
+            'handlers': ['console', 'file' , 'database'],
+            'level': 'INFO',
             'propagate': False,
         },
         'reviews': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
+            'handlers': ['console', 'file' , 'database'],
+            'level': 'INFO',
             'propagate': False,
         },
     },
@@ -222,12 +249,6 @@ USE_TZ = True
 SESSION_COOKIE_SECURE = True
 
 CSRF_COOKIE_SECURE = True
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
-
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 
 # Default primary key field type
