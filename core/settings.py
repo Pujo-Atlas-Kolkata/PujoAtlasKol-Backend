@@ -15,6 +15,7 @@ from decouple import config
 import os
 from datetime import timedelta
 from django.core.management.utils import get_random_secret_key
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -232,6 +233,12 @@ LOGGING = {
     },
 }
 
+CELERY_BEAT_SCHEDULE = {
+    'reset-trending': {
+        'task': 'core.task.update_pujo_scores',
+        'schedule': crontab(hour='5', minute='0'),  # Every day at 5 AM
+    },
+}
 
 
 

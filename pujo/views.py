@@ -1,18 +1,18 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.db.models import Q, F
-from .models import Pujo
+from django.db.models import Q, F, Value, DateTimeField
+from .models import Pujo, LastScoreModel
 from .serializers import PujoSerializer, TrendingPujoSerializer, SearchedPujoSerializer, searchPujoSerializer
 from core.ResponseStatus import ResponseStatus
 import logging
 from user.permission import IsSuperOrAdminUser
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.decorators import action
 from rest_framework import permissions
 import re
 from django.utils import timezone
-
+from django.db.models.functions import Coalesce, Cast
+from datetime import datetime
 
 logger = logging.getLogger("pujo")
 
@@ -80,7 +80,33 @@ class PujoViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='trending')
     def trending(self, request, *args, **kwargs):
         try:
-            trending_pujos = Pujo.objects.all().order_by('-search_score')[:10]
+            # get pujos sorted by search score and updated_at
+            trending_pujos = Pujo.objects.annotate(updated_at_fallback=Coalesce('updated_at', Cast(Value('1970-01-01'), DateTimeField()))).order_by('-search_score', '-updated_at_fallback')[:10]
+
+            same_score_pujos = {}
+        
+            for pujo in trending_pujos:
+                score = pujo.search_score
+                if score not in same_score_pujos:
+                    same_score_pujos[score] = []
+                same_score_pujos[score].append(pujo)
+
+            
+            # Increment the search_score of the most recently updated pujo for scores with duplicates
+            for score, pujos in same_score_pujos.items():
+                if len(pujos) > 1:  # More than one pujo with the same score
+                    most_recent_pujo = sorted(pujos, key=lambda x: x.updated_at or datetime(1970, 1, 1), reverse=True)[0]
+                    # Sort by updated_at and get the most recent one
+                    last_score_array = most_recent_pujo.last_scores.all()
+                    # Check if the array length is 50, and if so, remove the first element
+                    if last_score_array.count() > 49:
+                        last_score_array.first().delete()
+
+                    # Create a new LastScoreModel entry
+                    most_recent_pujo.search_score = most_recent_pujo.search_score + 1
+                    most_recent_pujo.save(update_fields=['search_score'])
+                    most_recent_pujo.save()
+                    LastScoreModel.objects.create(pujo=most_recent_pujo, value=1)
 
             serializer = TrendingPujoSerializer(trending_pujos, many=True)
             
@@ -234,31 +260,97 @@ class PujoTrendingIncreaseViewSet(viewsets.ModelViewSet):
     def increase_search_score(self, request, *args, **kwargs):
         try:
             serializer = SearchedPujoSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            uuid = serializer.validated_data['id']
+            if serializer.is_valid(raise_exception=True):
+                ids = serializer.validated_data['ids']
+                term = serializer.validated_data['term']
 
-            # Retrieve the Pujo instance
-            pujo = self.get_queryset().filter(id=uuid).first()
-            if pujo is None:
+                if term in ['select', 'navigate'] and len(ids) != 1:
+                    return Response(
+                        {'error': f"Term '{term}' requires exactly one Pujo ID.", 
+                        "status":ResponseStatus.FAIL.value},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                log = []
+                # Retrieve the Pujo instance
+                pujo_queryset = self.get_queryset().filter(id__in=ids)
+                found_pujos = {str(pujo.id): pujo for pujo in pujo_queryset}
+                missing_ids = [str(pujo_id) for pujo_id in ids if str(pujo_id) not in found_pujos]
+                
+                for missing_id in missing_ids:
+                    log.append({'id':str(missing_id),
+                        'error': 'Given Pujo does not exist',
+                    })
+                
+                if term == 'search':
+                    for pujo_id, pujo in found_pujos.items():
+                        last_score_array = pujo.last_scores.all()
+                        # Check if the array length is 50, and if so, remove the first element
+                        if last_score_array.count() > 49:
+                            last_score_array.first().delete()
+                            
+                        LastScoreModel.objects.create(pujo=pujo, value=-1)
+                        
+                        if pujo.search_score > 0:
+                            pujo.search_score = pujo.search_score - 1
+
+                        pujo.updated_at = timezone.now()
+                        pujo.save()
+                        log.append({"id":str(pujo_id),  'result': 'Score decremented by 1'})
+                    # Prepare the response with updated information
+                    response_data = {
+                        'result': log,
+                        'status': ResponseStatus.SUCCESS.value
+                    }
+                    return Response(response_data, status=status.HTTP_200_OK)
+                
+                if term == 'select':
+                    # we already know length is one
+                    for pujo_id, pujo in found_pujos.items():
+                        last_score_array = pujo.last_scores.all()
+                        # Check if the array length is 50, and if so, remove the first element
+                        if last_score_array.count() > 49:
+                            last_score_array.first().delete()
+                            
+                        LastScoreModel.objects.create(pujo=pujo, value=2)
+                        # Increment clicked Pujo's score by 2
+                        pujo.search_score += 2
+                        pujo.updated_at = timezone.now()
+                        pujo.save()
+                        log.append({"id":str(pujo_id),  'result': 'Score incremented by 2'})
+
+                    # Prepare the response with updated information
+                    response_data = {
+                        'result': log,
+                        'status': ResponseStatus.SUCCESS.value
+                    }
+                    return Response(response_data, status=status.HTTP_200_OK)
+
+                elif term == 'navigate':
+                    for pujo_id, pujo in found_pujos.items():
+                        last_score_array = pujo.last_scores.all()
+                        # Check if the array length is 50, and if so, remove the first element
+                        if last_score_array.count() > 49:
+                            last_score_array.first().delete()
+                        
+                        LastScoreModel.objects.create(pujo=pujo, value=3)
+                        # Increment clicked Pujo's score by 2
+                        pujo.search_score += 3
+                        pujo.updated_at = timezone.now()
+                        pujo.save()
+                        log.append({"id":str(pujo_id),  'result': 'Score incremented by 3'})
+                
+                    # Prepare the response with updated information
+                    response_data = {
+                        'result': log,
+                        'status': ResponseStatus.SUCCESS.value
+                    }
+                    return Response(response_data, status=status.HTTP_200_OK)
+            else:
                 response_data = {
-                    'error': 'Given Pujo does not exist',
+                    'result':serializer.errors,
                     'status': ResponseStatus.FAIL.value
                 }
-                logger.error(f"Error: {response_data['error']}")
-                return Response(response_data, status=status.HTTP_404_NOT_FOUND)
-
-            # Increment the searchScore by 1
-            pujo.search_score += 1
-            pujo.updated_at = timezone.now()
-            pujo.save()
-
-            updatedPujo = TrendingPujoSerializer(pujo)
-            # Prepare the response with updated information
-            response_data = {
-                'result': updatedPujo.data,
-                'status': ResponseStatus.SUCCESS.value
-            }
-            return Response(response_data, status=status.HTTP_200_OK)
 
         except Exception as e:
             response_data = {

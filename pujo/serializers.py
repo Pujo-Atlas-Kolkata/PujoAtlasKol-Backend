@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.utils import timezone
 from .models import Pujo
+from django.db import models
 
 class PujoSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
@@ -63,11 +64,18 @@ class TrendingPujoSerializer(serializers.ModelSerializer):
         return obj.formatted_zone()
 
 class SearchedPujoSerializer(serializers.ModelSerializer):
-    id = serializers.UUIDField()
+    ids = serializers.ListField(
+        child=serializers.UUIDField(format='hex_verbose'),
+        required=True
+    )
+    term = serializers.ChoiceField(
+        choices=['search', 'select', 'navigate'], 
+        required=True
+    )
+
     class Meta:
         model = Pujo
-        fields = ['id']
-
+        fields = ['ids', 'term']
 
 class searchPujoSerializer(serializers.ModelSerializer):
     term = serializers.CharField()
