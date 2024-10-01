@@ -8,7 +8,6 @@ from core.ResponseStatus import ResponseStatus
 import logging
 from user.permission import IsSuperOrAdminUser
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.decorators import action
 from rest_framework import permissions
 import re
 from django.utils import timezone
@@ -234,31 +233,100 @@ class PujoTrendingIncreaseViewSet(viewsets.ModelViewSet):
     def increase_search_score(self, request, *args, **kwargs):
         try:
             serializer = SearchedPujoSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            uuid = serializer.validated_data['id']
+            if serializer.is_valid(raise_exception=True):
+                ids = serializer.validated_data['ids']
+                term = serializer.validated_data['term']
 
-            # Retrieve the Pujo instance
-            pujo = self.get_queryset().filter(id=uuid).first()
-            if pujo is None:
+                if term in ['select', 'navigate'] and len(ids) != 1:
+                    return Response(
+                        {'error': f"Term '{term}' requires exactly one Pujo ID.", 
+                        "status":ResponseStatus.FAIL.value},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                log = []
+                # Retrieve the Pujo instance
+                pujo_queryset = self.get_queryset().filter(id__in=ids)
+                found_pujos = {str(pujo.id): pujo for pujo in pujo_queryset}
+                missing_ids = [str(pujo_id) for pujo_id in ids if str(pujo_id) not in found_pujos]
+                
+                for missing_id in missing_ids:
+                    log.append({'id':str(missing_id),
+                        'error': 'Given Pujo does not exist',
+                    })
+                
+                if term == 'search':
+                    for pujo_id, pujo in found_pujos.items():
+                        last_score_array = pujo.last_score
+                        # Check if the array length is 50, and if so, remove the first element
+                        if len(last_score_array) > 49:
+                            last_score_array.pop(0)
+                            
+                        last_score_array.append(-1)
+                        pujo.last_score = last_score_array
+                        
+                        if pujo.search_score > 0:
+                            pujo.search_score = pujo.search_score - 1
+
+                        pujo.updated_at = timezone.now()
+                        pujo.save()
+                        log.append({"id":str(pujo_id),  'result': 'Score decremented by 1'})
+                    # Prepare the response with updated information
+                    response_data = {
+                        'result': log,
+                        'status': ResponseStatus.SUCCESS.value
+                    }
+                    return Response(response_data, status=status.HTTP_200_OK)
+                
+                if term == 'select':
+                    # clicked_pujo = self.get_queryset().filter(id__in=ids).first()
+                    # we already know length is one
+                    for pujo_id, pujo in found_pujos.items():
+                        last_score_array = pujo.last_score
+                        # Check if the array length is 50, and if so, remove the first element
+                        if len(last_score_array) > 49:
+                            last_score_array.pop(0)
+                            
+                        # Increment clicked Pujo's score by 2
+                        pujo.search_score += 2
+                        last_score_array.append(2)
+                        pujo.last_score = last_score_array
+                        pujo.updated_at = timezone.now()
+                        pujo.save()
+                        log.append({"id":str(pujo_id),  'result': 'Score incremented by 2'})
+
+                    # Prepare the response with updated information
+                    response_data = {
+                        'result': log,
+                        'status': ResponseStatus.SUCCESS.value
+                    }
+                    return Response(response_data, status=status.HTTP_200_OK)
+
+                elif term == 'navigate':
+                    for pujo_id, pujo in found_pujos.items():
+                        last_score_array = pujo.last_score
+                        # Check if the array length is 50, and if so, remove the first element
+                        if len(last_score_array) > 49:
+                            last_score_array.pop(0)
+                        # Increment clicked Pujo's score by 2
+                        pujo.search_score += 3
+                        last_score_array.append(3)
+                        pujo.last_score = last_score_array
+                        pujo.updated_at = timezone.now()
+                        pujo.save()
+                        log.append({"id":str(pujo_id),  'result': 'Score incremented by 3'})
+                
+                    # Prepare the response with updated information
+                    response_data = {
+                        'result': log,
+                        'status': ResponseStatus.SUCCESS.value
+                    }
+                    return Response(response_data, status=status.HTTP_200_OK)
+            else:
                 response_data = {
-                    'error': 'Given Pujo does not exist',
+                    'result':serializer.errors,
                     'status': ResponseStatus.FAIL.value
                 }
-                logger.error(f"Error: {response_data['error']}")
-                return Response(response_data, status=status.HTTP_404_NOT_FOUND)
-
-            # Increment the searchScore by 1
-            pujo.search_score += 1
-            pujo.updated_at = timezone.now()
-            pujo.save()
-
-            updatedPujo = TrendingPujoSerializer(pujo)
-            # Prepare the response with updated information
-            response_data = {
-                'result': updatedPujo.data,
-                'status': ResponseStatus.SUCCESS.value
-            }
-            return Response(response_data, status=status.HTTP_200_OK)
 
         except Exception as e:
             response_data = {

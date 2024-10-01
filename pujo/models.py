@@ -1,5 +1,6 @@
 from django.db import models
 import uuid
+from django.contrib.postgres.fields import ArrayField
 
 class Pujo(models.Model):
     id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, primary_key=True)
@@ -10,6 +11,7 @@ class Pujo(models.Model):
     city = models.TextField()
     zone = models.CharField(max_length=100)
     search_score=models.IntegerField(default=0)
+    last_score = ArrayField(models.IntegerField(), default=list, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(null = True)
 
