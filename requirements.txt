@@ -15,3 +15,6 @@ drf-spectacular
 setuptools
 djangorestframework-simplejwt
 django-cors-headers
+celery 
+redis
+supervisor

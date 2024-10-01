@@ -2,6 +2,14 @@ from django.db import models
 import uuid
 from django.contrib.postgres.fields import ArrayField
 
+class LastScoreModel(models.Model):
+    pujo = models.ForeignKey('Pujo', related_name='last_scores', on_delete=models.CASCADE)
+    value = models.IntegerField()
+    last_updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Score: {self.value} at {self.last_updated_at}"
+
 class Pujo(models.Model):
     id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, primary_key=True)
     name = models.CharField(max_length=100)
@@ -11,7 +19,6 @@ class Pujo(models.Model):
     city = models.TextField()
     zone = models.CharField(max_length=100)
     search_score=models.IntegerField(default=0)
-    last_score = ArrayField(models.IntegerField(), default=list, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(null = True)
 
