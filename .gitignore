@@ -168,7 +168,3 @@ cython_debug/
 **/__pycache__/
 example.http
 /staticfiles
-supervisord.conf
-celerybeat-schedule.db
-dump.rdb
-supervisord.conf
