@@ -247,7 +247,7 @@ LOGGING = {
 CELERY_TIMEZONE = 'Asia/Kolkata'
 # Disable UTC to use the specified timezone
 CELERY_ENABLE_UTC = False
-CELERY_BROKER_URL = 'amqp://your_username:your_password@localhost:5672//'
+CELERY_BROKER_URL = f'amqp://{config("RABBIT_MQ_USERNAME")}:{config("RABBIT_MQ_PASSWORD")}@localhost:5672//'
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 # CELERY_RESULT_BACKEND = 'rpc://'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
