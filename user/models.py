@@ -16,7 +16,7 @@ class User(AbstractUser):
 
     id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, primary_key=True)
     access_location = models.BooleanField(null=True)
-    contact = models.IntegerField(null=True)
+    contact = models.CharField(max_length=15, null=True)
     gender = models.CharField(max_length=100, null=True)
     birth_date = models.DateField(null=True)
     profile_picture = models.CharField(max_length=255, null=True)  

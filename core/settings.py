@@ -163,6 +163,7 @@ CORS_ALLOWED_ORIGINS = [
 # allowing all sub domains to access
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https?://.*\.ourkolkata\.in$",
+    r"^https?://192\.168\.\d+\.\d+:4321$",
 ]
 
 # CORS_ALLOW_ALL_ORIGINS = True
