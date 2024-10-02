@@ -1,7 +1,7 @@
 from celery import shared_task
 from django.utils import timezone
 from pujo.models import Pujo, LastScoreModel
-from django.utils import timezone
+from datetime import datetime, timedelta
 import csv
 import os
 from datetime import datetime
@@ -44,59 +44,93 @@ def update_pujo_scores():
 
 @shared_task
 def backup_logs_to_minio():
-    print(f"Started backing up the log files")
-
-    # Filename with the current date and time
-    filename = datetime.now().strftime('%Y_%m_%d_%H_%M_%S') + "_logs.csv"
-    file_path = os.path.join(settings.MEDIA_ROOT, filename)
-
-    # Fetch all logs
-    logs = Log.objects.all()
-
-    # Create a CSV file and write log data
-    with open(file_path, 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        # Write headers
-        writer.writerow(['id', 'level', 'message', 'module', 'user_id', 'created_at'])
-        # Write data rows
-        for log in logs:
-            writer.writerow([log.id, log.level, log.message, log.module, log.user_id, log.created_at])
-
+    print("Started backing up the log files")
+    
     # Initialize MinIO client
-    minio_client = Minio(
+    minio_client = initialize_minio_client()
+
+    # Directory to save CSV files
+    local_backup_dir = settings.MEDIA_ROOT
+
+    # Step 1: Upload any existing local CSV files
+    upload_existing_csv_files(minio_client, local_backup_dir)
+
+    # Step 2: Create a new CSV file with logs older than 20 minutes and upload it
+    create_and_upload_log_backup(minio_client, local_backup_dir)
+
+def initialize_minio_client():
+    """Initialize and return a MinIO client."""
+    return Minio(
         settings.MINIO_URL,
         access_key=settings.MINIO_ACCESS_KEY,
         secret_key=settings.MINIO_SECRET_KEY,
         secure=True  # This is set to True because of the https URL
     )
 
-    # Upload the file to MinIO
+def upload_existing_csv_files(minio_client, local_backup_dir):
+    """Check and upload any existing CSV files in the backup directory to MinIO."""
+    for file in os.listdir(local_backup_dir):
+        if file.endswith("_logs.csv"):
+            file_path = os.path.join(local_backup_dir, file)
+            try:
+                print(f"Found an existing CSV file to backup: {file}")
+                upload_file_to_minio(minio_client, file, file_path)
+                verify_and_delete_local_file(minio_client, file, file_path)
+            except Exception as e:
+                print(f"Failed to upload file {file} to MinIO: {str(e)}")
+                # Keep the local file in case of failure
+
+def create_and_upload_log_backup(minio_client, local_backup_dir):
+    """Create a new CSV file with logs older than 20 minutes and upload it to MinIO."""
+    # Filename with the current date and time
+    filename = datetime.now().strftime('%Y_%m_%d_%H_%M_%S') + "_logs.csv"
+    file_path = os.path.join(local_backup_dir, filename)
+
+    # Calculate the time buffer (20 minutes)
+    buffer_time = timezone.now() - timedelta(minutes=20)
+
+    # Fetch logs that were created more than 20 minutes ago
+    logs = Log.objects.filter(created_at__lt=buffer_time)
+
+    # Create a CSV file and write log data
+    with open(file_path, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['id', 'level', 'message', 'module', 'user_id', 'created_at'])  # Write headers
+        for log in logs:  # Write data rows
+            writer.writerow([log.id, log.level, log.message, log.module, log.user_id, log.created_at])
+
+    # Upload the newly created CSV file to MinIO
     try:
-        if not minio_client.bucket_exists(settings.MINIO_BUCKET_NAME):
-            minio_client.make_bucket(settings.MINIO_BUCKET_NAME)
-        minio_client.fput_object(
-            settings.MINIO_BUCKET_NAME,
-            filename,
-            file_path,
-            content_type='application/csv'
-        )
-        print(f"File {filename} uploaded to MinIO bucket {settings.MINIO_BUCKET_NAME} successfully.")
-        # Verification Step: Check if the file is present in the bucket
-        objects = minio_client.list_objects(settings.MINIO_BUCKET_NAME, prefix=filename)
-        file_found = any(obj.object_name == filename for obj in objects)
-
-        if file_found:
-            print(f"File {filename} verified in MinIO bucket {settings.MINIO_BUCKET_NAME}.")
-        else:
-            print(f"Verification failed: File {filename} not found in MinIO bucket {settings.MINIO_BUCKET_NAME}.")
-
-    
+        upload_file_to_minio(minio_client, filename, file_path)
+        verify_and_delete_local_file(minio_client, filename, file_path)
+        # Delete logs from the database if backup is successful
+        logs.delete()
+        print(f"Logs older than 20 minutes successfully deleted from the database.")
     except Exception as e:
-        print(f"Failed to upload file to MinIO: {str(e)}")
-    finally:
-        # Delete the CSV file from local after uploading to MinIO
-        if os.path.exists(file_path):
-            os.remove(file_path)
+        print(f"Failed to upload file {filename} to MinIO: {str(e)}")
+        # Keep the local file in case of failure
 
-    # Delete logs from the database that have been backed up
-    logs.delete()
+def upload_file_to_minio(minio_client, filename, file_path):
+    """Upload a file to MinIO bucket."""
+    if not minio_client.bucket_exists(settings.MINIO_BUCKET_NAME):
+        minio_client.make_bucket(settings.MINIO_BUCKET_NAME)
+
+    minio_client.fput_object(
+        settings.MINIO_BUCKET_NAME,
+        filename,
+        file_path,
+        content_type='application/csv'
+    )
+    print(f"File {filename} uploaded to MinIO bucket {settings.MINIO_BUCKET_NAME} successfully.")
+
+def verify_and_delete_local_file(minio_client, filename, file_path):
+    """Verify if the file is in MinIO and delete the local copy if successful."""
+    objects = minio_client.list_objects(settings.MINIO_BUCKET_NAME, prefix=filename)
+    file_found = any(obj.object_name == filename for obj in objects)
+
+    if file_found:
+        print(f"File {filename} verified in MinIO bucket {settings.MINIO_BUCKET_NAME}.")
+        os.remove(file_path)
+        print(f"Local file {filename} successfully deleted after backup.")
+    else:
+        print(f"Verification failed: File {filename} not found in MinIO bucket {settings.MINIO_BUCKET_NAME}.")
