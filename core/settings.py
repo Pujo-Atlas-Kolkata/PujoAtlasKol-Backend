@@ -247,6 +247,16 @@ LOGGING = {
 CELERY_TIMEZONE = 'Asia/Kolkata'
 # Disable UTC to use the specified timezone
 CELERY_ENABLE_UTC = False
+CELERY_BROKER_URL = 'amqp://your_username:your_password@localhost:5672//'
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+# CELERY_RESULT_BACKEND = 'rpc://'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_TASK_TIME_LIMIT = 300  # seconds
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_ACKS_LATE = True  # Acknowledge tasks only after they are executed
+CELERY_TASK_REJECT_ON_WORKER_LOST = True  # Reject tasks if a worker dies
+CELERYD_HIJACK_ROOT_LOGGER = False
 CELERY_BEAT_SCHEDULE = {
     'reset-trending': {
         'task': 'core.task.update_pujo_scores',
