@@ -8,43 +8,46 @@ from datetime import datetime
 from django.conf import settings
 from minio import Minio
 from Log.models import Log
-from decouple import config
+import logging
 
+logger = logging.getLogger('core.task')
 
 @shared_task
 def update_pujo_scores():
     current_time = timezone.now()
     # Adjust X to the desired number of hours
-    X = 6  
+    X = 3  
 
     pujos = Pujo.objects.filter(updated_at__lt=current_time - timezone.timedelta(hours=X))
-    for pujo in pujos:
-        # Sum all positive last scores in the last 2X hours
-        last_scores = LastScoreModel.objects.filter(
-            pujo=pujo,
-            last_updated_at__gt=current_time - timezone.timedelta(hours=2 * X),
-            value__gt=0
-        )
+    if not pujos.exists():
+        logger.info("No pujos found for score update.")
+    else:
+        for pujo in pujos:
+            # Sum all positive last scores in the last 2X hours
+            last_scores = LastScoreModel.objects.filter(
+                pujo=pujo,
+                last_updated_at__gt=current_time - timezone.timedelta(hours=2 * X)
+            )
 
-        # sum all positive scores
-        score_sum = sum(score.value for score in last_scores if score.value > 0)
+            # sum all positive scores
+            score_sum = sum(score.value for score in last_scores if score.value > 0)
 
-        # Update the pujo's score and make sure it does not go belowe zero
-        pujo.search_score = max(pujo.search_score - score_sum, 0)
-        pujo.save()
+            # Update the pujo's score and make sure it does not go belowe zero
+            pujo.search_score = max(pujo.search_score - score_sum, 0)
+            pujo.save()
 
-        # Remove all previous last scores
-        last_scores.delete()
+            # Remove all previous last scores
+            last_scores.delete()
 
-        # Log the score summation - the new score
-        LastScoreModel.objects.create(pujo=pujo, value=-score_sum)
+            # Log the score summation - the new score
+            LastScoreModel.objects.create(pujo=pujo, value=-score_sum)
 
 # MinIO configuration
 # Load environment variables from the .env file
 
 @shared_task
 def backup_logs_to_minio():
-    print("Started backing up the log files")
+    logger.info("Started backing up the log files")
     
     # Initialize MinIO client
     minio_client = initialize_minio_client()
@@ -105,9 +108,9 @@ def create_and_upload_log_backup(minio_client, local_backup_dir):
         verify_and_delete_local_file(minio_client, filename, file_path)
         # Delete logs from the database if backup is successful
         logs.delete()
-        print(f"Logs older than 20 minutes successfully deleted from the database.")
+        logger.info(f"Logs older than 20 minutes successfully deleted from the database.")
     except Exception as e:
-        print(f"Failed to upload file {filename} to MinIO: {str(e)}")
+        logger.info(f"Failed to upload file {filename} to MinIO: {str(e)}")
         # Keep the local file in case of failure
 
 def upload_file_to_minio(minio_client, filename, file_path):
@@ -121,7 +124,7 @@ def upload_file_to_minio(minio_client, filename, file_path):
         file_path,
         content_type='application/csv'
     )
-    print(f"File {filename} uploaded to MinIO bucket {settings.MINIO_BUCKET_NAME} successfully.")
+    logger.info(f"File {filename} uploaded to MinIO bucket {settings.MINIO_BUCKET_NAME} successfully.")
 
 def verify_and_delete_local_file(minio_client, filename, file_path):
     """Verify if the file is in MinIO and delete the local copy if successful."""
@@ -129,8 +132,8 @@ def verify_and_delete_local_file(minio_client, filename, file_path):
     file_found = any(obj.object_name == filename for obj in objects)
 
     if file_found:
-        print(f"File {filename} verified in MinIO bucket {settings.MINIO_BUCKET_NAME}.")
+        logger.info(f"File {filename} verified in MinIO bucket {settings.MINIO_BUCKET_NAME}.")
         os.remove(file_path)
-        print(f"Local file {filename} successfully deleted after backup.")
+        logger.info(f"Local file {filename} successfully deleted after backup.")
     else:
-        print(f"Verification failed: File {filename} not found in MinIO bucket {settings.MINIO_BUCKET_NAME}.")
+        logger.info(f"Verification failed: File {filename} not found in MinIO bucket {settings.MINIO_BUCKET_NAME}.")

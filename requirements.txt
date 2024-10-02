@@ -19,3 +19,4 @@ celery
 redis
 supervisor
 minio==7.1.0
+black

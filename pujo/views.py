@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.db.models import Q, F, Value, DateTimeField
+from django.db.models import Q
 from .models import Pujo, LastScoreModel
 from .serializers import PujoSerializer, TrendingPujoSerializer, SearchedPujoSerializer, searchPujoSerializer
 from core.ResponseStatus import ResponseStatus
@@ -81,7 +81,7 @@ class PujoViewSet(viewsets.ModelViewSet):
     def trending(self, request, *args, **kwargs):
         try:
             # get pujos sorted by search score and updated_at
-            trending_pujos = Pujo.objects.annotate(updated_at_fallback=Coalesce('updated_at', Cast(Value('1970-01-01'), DateTimeField()))).order_by('-search_score', '-updated_at_fallback')[:10]
+            trending_pujos = Pujo.objects.annotate(updated_at_fallback=Coalesce('updated_at', timezone.make_aware(datetime(1970, 1, 1)))).order_by('-search_score', '-updated_at_fallback')[:10]
 
             same_score_pujos = {}
         
@@ -95,7 +95,7 @@ class PujoViewSet(viewsets.ModelViewSet):
             # Increment the search_score of the most recently updated pujo for scores with duplicates
             for score, pujos in same_score_pujos.items():
                 if len(pujos) > 1:  # More than one pujo with the same score
-                    most_recent_pujo = sorted(pujos, key=lambda x: x.updated_at or datetime(1970, 1, 1), reverse=True)[0]
+                    most_recent_pujo = sorted(pujos, key=lambda x: x.updated_at or timezone.make_aware(datetime(1970, 1, 1)), reverse=True)[0]
                     # Sort by updated_at and get the most recent one
                     last_score_array = most_recent_pujo.last_scores.all()
                     # Check if the array length is 50, and if so, remove the first element

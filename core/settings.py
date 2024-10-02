@@ -154,18 +154,18 @@ MINIO_BUCKET_NAME = config('MINIO_BUCKET_NAME')
 SECRET_KEY = get_random_secret_key()
 DEBUG = config('DEBUG', cast=bool)
 ALLOWED_HOSTS = ["api-atlas.ourkolkata.in",'localhost', '127.0.0.1',"ec2-3-111-147-124.ap-south-1.compute.amazonaws.com"]
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3001",
-#     "http://127.0.0.1:3001",
-#     "http://localhost:4321",
-# ]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:4321",
+]
 
 # allowing all sub domains to access
-# CORS_ALLOWED_ORIGIN_REGEXES = [
-#     r"^https?://.*\.ourkolkata\.in$",
-# ]
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https?://.*\.ourkolkata\.in$",
+]
 
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOW_ALL_ORIGINS = True
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -220,6 +220,11 @@ LOGGING = {
             'handlers': ['console', 'file' , 'database'],
             'level': 'INFO',
         },
+        'core.task': {
+            'handlers': ['console', 'file', 'database'],
+            'level': 'INFO',
+            'propagate': False,
+        },
         'pujo': {
             'handlers': ['console', 'file' , 'database'],
             'level': 'INFO',
@@ -242,10 +247,20 @@ LOGGING = {
 CELERY_TIMEZONE = 'Asia/Kolkata'
 # Disable UTC to use the specified timezone
 CELERY_ENABLE_UTC = False
+CELERY_BROKER_URL = f'amqp://{config("RABBIT_MQ_USERNAME")}:{config("RABBIT_MQ_PASSWORD")}@localhost:5672//'
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+# CELERY_RESULT_BACKEND = 'rpc://'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_TASK_TIME_LIMIT = 300  # seconds
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_ACKS_LATE = True  # Acknowledge tasks only after they are executed
+CELERY_TASK_REJECT_ON_WORKER_LOST = True  # Reject tasks if a worker dies
+CELERYD_HIJACK_ROOT_LOGGER = False
 CELERY_BEAT_SCHEDULE = {
     'reset-trending': {
         'task': 'core.task.update_pujo_scores',
-        'schedule': crontab(hour='5', minute='0'),  # Every day at 5 AM
+        'schedule': crontab(minute=0, hour='*/6'),
     },
     'backup-logs': {
         'task': 'core.task.backup_logs_to_minio',
