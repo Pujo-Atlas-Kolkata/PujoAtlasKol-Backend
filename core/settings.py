@@ -238,6 +238,10 @@ LOGGING = {
     },
 }
 
+# Time zone for Celery
+CELERY_TIMEZONE = 'Asia/Kolkata'
+# Disable UTC to use the specified timezone
+CELERY_ENABLE_UTC = False
 CELERY_BEAT_SCHEDULE = {
     'reset-trending': {
         'task': 'core.task.update_pujo_scores',
