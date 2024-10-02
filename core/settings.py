@@ -145,6 +145,11 @@ DATABASES = {
     }
 }
 
+MINIO_URL = config('MINIO_URL')
+MINIO_ACCESS_KEY = config('MINIO_ACCESS_KEY')
+MINIO_SECRET_KEY = config('MINIO_SECRET_KEY')
+MINIO_BUCKET_NAME = config('MINIO_BUCKET_NAME')
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = get_random_secret_key()
 DEBUG = config('DEBUG', cast=bool)
@@ -237,6 +242,10 @@ CELERY_BEAT_SCHEDULE = {
     'reset-trending': {
         'task': 'core.task.update_pujo_scores',
         'schedule': crontab(hour='5', minute='0'),  # Every day at 5 AM
+    },
+    'backup-logs': {
+        'task': 'core.task.backup_logs_to_minio',
+        'schedule': crontab(hour='4', minute='30'),  # Every day at 4:30 AM
     },
 }
 
