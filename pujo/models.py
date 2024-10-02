@@ -18,7 +18,7 @@ class Pujo(models.Model):
     address = models.TextField()
     city = models.TextField()
     zone = models.CharField(max_length=100)
-    search_score=models.IntegerField(default=0)
+    search_score=models.IntegerField(default=100)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(null = True)
 

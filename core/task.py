@@ -29,8 +29,8 @@ def update_pujo_scores():
         # sum all positive scores
         score_sum = sum(score.value for score in last_scores if score.value > 0)
 
-        # Update the pujo's score
-        pujo.search_score -= score_sum
+        # Update the pujo's score and make sure it does not go belowe zero
+        pujo.search_score = max(pujo.search_score - score_sum, 0)
         pujo.save()
 
         # Remove all previous last scores
