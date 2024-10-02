@@ -128,7 +128,7 @@ class PujoViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, uuid=None, *args, **kwargs):
         try:
             user = request.user
-            self.check_permissions(request, user)
+            self.check_object_permissions(request, user)
             pujo = self.get_queryset().filter(id=uuid).first()
             if pujo is None:
                 response_data = {
