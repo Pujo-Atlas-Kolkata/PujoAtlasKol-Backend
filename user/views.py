@@ -344,7 +344,6 @@ class LogoutView(APIView):
                 }
                 user_id = request.user.id if request.user.is_authenticated else None
                 logger.info(f"Success: {response_data['result']}", extra={'user_id': user_id})
-                call_command('delete_old_logs')
                 return Response(response_data, status=status.HTTP_200_OK)
         else:
                     response_data = {

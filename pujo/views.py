@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.db.models import Q, F, Value, DateTimeField
+from django.db.models import Q
 from .models import Pujo, LastScoreModel
 from .serializers import PujoSerializer, TrendingPujoSerializer, SearchedPujoSerializer, searchPujoSerializer
 from core.ResponseStatus import ResponseStatus
@@ -13,7 +13,6 @@ import re
 from django.utils import timezone
 from django.db.models.functions import Coalesce, Cast
 from datetime import datetime
-from django.utils import timezone
 
 logger = logging.getLogger("pujo")
 
