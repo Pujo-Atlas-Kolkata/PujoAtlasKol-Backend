@@ -17,7 +17,7 @@ pgClient.connect()
     .catch(err => console.error("Connection error", err.stack));
 
 // Schedule cron job to run every day at 5 AM
-cron.schedule('* * * * *', async () => {
+cron.schedule('0 5 * * *', async () => {
     try {
         console.log("Running update_pujo_scores cron job");
 

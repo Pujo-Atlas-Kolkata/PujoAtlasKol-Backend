@@ -171,3 +171,4 @@ example.http
 node-cron/package-lock.json
 node-cron/node_modules/
 node-cron/nohup.out
+package-lock.json

@@ -53,4 +53,6 @@ tasks:
       fi
     - pip install -r requirements.txt
     - python manage.py migrate
-    desc: "Setup project environment: Docker, virtual environment, dependencies, migrations"
+    - |
+      cd node-cron && npm i && nohup node index.js &
+    desc: "Setup project environment: Docker, virtual environment, dependencies, migrations, and start node-cron service"
