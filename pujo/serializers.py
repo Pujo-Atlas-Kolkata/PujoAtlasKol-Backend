@@ -4,10 +4,10 @@ from .models import Pujo
 from django.db import models
 
 class PujoSerializer(serializers.ModelSerializer):
-    name = serializers.SerializerMethodField()
-    address = serializers.SerializerMethodField()
-    city = serializers.SerializerMethodField()
-    zone = serializers.SerializerMethodField()
+    name = serializers.CharField()
+    address = serializers.CharField()
+    city = serializers.CharField()
+    zone = serializers.CharField()
     class Meta:
         model = Pujo
         fields = ['id', 'lat','lon','zone', 'city', 'name', 'address', 'created_at']
@@ -43,10 +43,10 @@ class PujoSerializer(serializers.ModelSerializer):
         return obj.formatted_zone()
 
 class TrendingPujoSerializer(serializers.ModelSerializer):
-    name = serializers.SerializerMethodField()
-    address = serializers.SerializerMethodField()
-    city = serializers.SerializerMethodField()
-    zone = serializers.SerializerMethodField()
+    name = serializers.CharField()
+    address = serializers.CharField()
+    city = serializers.CharField()
+    zone = serializers.CharField()
     class Meta:
         model = Pujo
         fields = ['id', 'lat','lon','zone', 'city', 'name', 'address', 'search_score', 'created_at']
