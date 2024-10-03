@@ -15,11 +15,11 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 import django
 django.setup()
 
-# Import tasks after Django setup
-from core.task import update_pujo_scores, backup_logs_to_minio
-
 # Autodiscover tasks from installed Django apps
 app.autodiscover_tasks()
+
+# Import tasks after Django setup
+from core.task import update_pujo_scores, backup_logs_to_minio
 
 # Register tasks explicitly
 app.register_task(update_pujo_scores)
