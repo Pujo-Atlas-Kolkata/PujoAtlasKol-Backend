@@ -26,7 +26,7 @@ npm --version
 
 This project uses a `Tasksfile.yml` to automate the setup process. You need to install Task (task runner for Go) before proceeding:
 
-- Installation instructions for Task can be found [here](https://taskfile.dev/#/installation).
+- Installation instructions for Task can be found [here](https://taskfile.dev/installation/).
 
 Once Task is installed, you can proceed with the setup.
 
