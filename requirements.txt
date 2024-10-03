@@ -15,7 +15,7 @@ drf-spectacular
 setuptools
 djangorestframework-simplejwt
 django-cors-headers
-celery 
+celery
 redis
 supervisor
 minio==7.1.0
