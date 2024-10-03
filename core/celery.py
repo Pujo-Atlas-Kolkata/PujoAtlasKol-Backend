@@ -1,8 +1,9 @@
 import os
 from celery import Celery
 from core.task import update_pujo_scores, backup_logs_to_minio
+from decouple import config
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', config('DJANGO_SETTINGS_MODULE'))
 
 app = Celery('core')
 app.config_from_object('django.conf:settings', namespace='CELERY')
