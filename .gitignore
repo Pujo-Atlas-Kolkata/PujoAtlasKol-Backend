@@ -168,3 +168,6 @@ cython_debug/
 **/__pycache__/
 example.http
 /staticfiles
+node-cron/package-lock.json
+node-cron/node_modules/
+node-cron/nohup.out
