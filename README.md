@@ -35,8 +35,8 @@ Once Task is installed, you can proceed with the setup.
 1. Clone the repository:
 
    ```sh
-   git clone <repository-url>
-   cd <repository-directory>
+   git clone https://github.com/Andrew99xx/PujoAtlasKol-Backend.git
+   cd PujoAtlasKol-Backend
    ```
 
 2. Run the setup task:
