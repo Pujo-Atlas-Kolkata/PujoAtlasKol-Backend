@@ -18,13 +18,13 @@ django.setup()
 # Autodiscover tasks from installed Django apps
 app.autodiscover_tasks()
 
-# Import tasks after Django setup
-from core.task import update_pujo_scores, backup_logs_to_minio
-
-# Register tasks explicitly
-app.register_task(update_pujo_scores)
-app.register_task(backup_logs_to_minio)
-
 # Set additional configuration
 app.conf.broker_connection_retry_on_startup = True
 app.conf.task_time_limit = 300
+
+# Import tasks after Celery app is set up
+from core.task import update_pujo_scores, backup_logs_to_minio
+
+# Register tasks explicitly (optional if using @shared_task)
+# app.register_task(update_pujo_scores)
+# app.register_task(backup_logs_to_minio)
