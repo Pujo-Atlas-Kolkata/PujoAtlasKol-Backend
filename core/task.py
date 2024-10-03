@@ -14,6 +14,7 @@ logger = logging.getLogger('core.task')
 
 @shared_task
 def update_pujo_scores():
+    logger.info("Pujo Cron Job started")
     current_time = timezone.now()
     # Adjust X to the desired number of hours
     X = 3  
@@ -41,6 +42,8 @@ def update_pujo_scores():
 
             # Log the score summation - the new score
             LastScoreModel.objects.create(pujo=pujo, value=-score_sum)
+    
+    logger.info("Pujo Cron Job Ended")
 
 # MinIO configuration
 # Load environment variables from the .env file
