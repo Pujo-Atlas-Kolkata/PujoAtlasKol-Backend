@@ -1,0 +1,56 @@
+version: '3'
+
+tasks:
+  setup:
+    cmds:
+    - task: check-prerequisites
+    - task: setup-project
+    desc: "Check prerequisites and setup project"
+
+  check-prerequisites:
+    cmds:
+    - |
+      if ! command -v docker > /dev/null; then
+        echo "Error: docker is not installed."
+        exit 1
+      fi
+    - |
+      if ! command -v docker-compose > /dev/null; then
+        echo "Error: docker-compose is not installed."
+        exit 1
+      fi
+    - |
+      if ! command -v python > /dev/null; then
+        echo "Error: python is not installed."
+        exit 1
+      fi
+    - |
+      if ! command -v node > /dev/null; then
+        echo "Error: node is not installed."
+        exit 1
+      fi
+    - |
+      if ! command -v npm > /dev/null; then
+        echo "Error: npm is not installed."
+        exit 1
+      fi
+    - |
+      if ! docker info > /dev/null 2>&1; then
+        echo "Error: Docker is not running."
+        exit 1
+      fi
+    desc: "Check for required prerequisites: docker, docker-compose, python, node, npm"
+
+  setup-project:
+    cmds:
+    - docker-compose up -d
+    - python -m venv venv
+    - |
+      if [ "$OS" = "Windows_NT" ]; then
+        venv\\Scripts\\activate
+      else
+        source venv/bin/activate
+      fi
+    - pip install -r requirements.txt
+    - python manage.py migrate
+    desc: "Setup project environment: Docker, virtual environment, dependencies, migrations"
