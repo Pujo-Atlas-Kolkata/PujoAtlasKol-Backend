@@ -1,6 +1,6 @@
 import os
 from celery import Celery
-from task import update_pujo_scores, backup_logs_to_minio
+from core.task import update_pujo_scores, backup_logs_to_minio
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 
