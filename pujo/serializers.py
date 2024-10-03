@@ -43,10 +43,10 @@ class PujoSerializer(serializers.ModelSerializer):
         return obj.formatted_zone()
 
 class TrendingPujoSerializer(serializers.ModelSerializer):
-    name = serializers.CharField()
-    address = serializers.CharField()
-    city = serializers.CharField()
-    zone = serializers.CharField()
+    name = serializers.SerializerMethodField()
+    address = serializers.SerializerMethodField()
+    city = serializers.SerializerMethodField()
+    zone = serializers.SerializerMethodField()
     class Meta:
         model = Pujo
         fields = ['id', 'lat','lon','zone', 'city', 'name', 'address', 'search_score', 'created_at']
@@ -82,5 +82,3 @@ class searchPujoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pujo
         fields = ["term"]
-
-    

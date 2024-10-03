@@ -62,7 +62,7 @@ class PujoViewSet(viewsets.ModelViewSet):
             queryset = self.get_queryset()
             # Check if query parameters are provided
             # If no parameters are provided, return all records
-            serializer = self.get_serializer(queryset, many=True)
+            serializer = TrendingPujoSerializer(queryset, many=True)
             response_data = {
                     'result': serializer.data,
                     'message':'Pujo list successfully fetched',
@@ -139,7 +139,7 @@ class PujoViewSet(viewsets.ModelViewSet):
                 logger.error(f"Error: {response_data['error']}", extra={'user_id': user_id})
                 return Response(response_data, status=status.HTTP_404_NOT_FOUND)
             
-            serializer = self.get_serializer(pujo)
+            serializer = TrendingPujoSerializer(pujo)
             response_data = {
                 'result': serializer.data,
                 'status': ResponseStatus.SUCCESS.value
