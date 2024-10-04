@@ -2,7 +2,7 @@ const { Client } = require("pg");
 const cron = require("node-cron");
 require("dotenv").config({ path: "./.env" });
 
-// Schedule cron job to run every day at 5 AM
+// Schedule cron job to run every 6 hours
 cron.schedule("0 */6 * * *", async () => {
   // PostgreSQL credentials
   const client = new Client({
@@ -69,9 +69,9 @@ cron.schedule("0 */6 * * *", async () => {
         // Delete all previous last scores for this pujo
         const deleteLastScoresQuery = `
                     DELETE FROM "pujo_lastscoremodel"
-                    WHERE "pujo_id" = $1 AND "last_updated_at" > $2
+                    WHERE "pujo_id" = $1
                 `;
-        await client.query(deleteLastScoresQuery, [pujo.id, time2XHoursAgo]);
+        await client.query(deleteLastScoresQuery, [pujo.id]);
 
         // Log the score summation - create a new negative score entry
         const insertNewScoreQuery = `
