@@ -28,6 +28,12 @@ This project uses a `Tasksfile.yml` to automate the setup process. You need to i
 
 - Installation instructions for Task can be found [here](https://taskfile.dev/installation/).
 
+For those who have already `npm` installed run the below command for quick setup
+
+```sh
+   npm install -g @go-task/cli
+```
+
 Once Task is installed, you can proceed with the setup.
 
 ### Steps to Set Up
