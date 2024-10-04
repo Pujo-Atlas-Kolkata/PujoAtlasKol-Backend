@@ -15,7 +15,6 @@ from decouple import config
 import os
 from datetime import timedelta
 from django.core.management.utils import get_random_secret_key
-from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -241,31 +240,6 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
-    },
-}
-
-# Time zone for Celery
-CELERY_TIMEZONE = 'Asia/Kolkata'
-# Disable UTC to use the specified timezone
-CELERY_ENABLE_UTC = False
-CELERY_BROKER_URL = f'amqp://{config("RABBIT_MQ_USERNAME")}:{config("RABBIT_MQ_PASSWORD")}@localhost:5672//'
-CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
-# CELERY_RESULT_BACKEND = 'rpc://'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
-CELERY_TASK_TIME_LIMIT = 300  # seconds
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TASK_ACKS_LATE = True  # Acknowledge tasks only after they are executed
-CELERY_TASK_REJECT_ON_WORKER_LOST = True  # Reject tasks if a worker dies
-CELERYD_HIJACK_ROOT_LOGGER = False
-CELERY_BEAT_SCHEDULE = {
-    'reset-trending': {
-        'task': 'core.task.update_pujo_scores',
-        'schedule': crontab(minute=0, hour='*/6'),
-    },
-    'backup-logs': {
-        'task': 'core.task.backup_logs_to_minio',
-        'schedule': crontab(hour='4', minute='30'),  # Every day at 4:30 AM
     },
 }
 
