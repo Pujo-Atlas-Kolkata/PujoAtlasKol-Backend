@@ -50,7 +50,7 @@ class TrendingPujoSerializer(serializers.ModelSerializer):
     transport = TransportSerializer()
     class Meta:
         model = Pujo
-        fields = ['id', 'lat','lon','zone', 'city', 'name', 'address', 'search_score', 'created_at']
+        fields = ['id', 'lat','lon','zone', 'city', 'name', 'address', 'search_score', 'created_at', 'transport']
 
     def get_name(self, obj):
         return obj.formatted_name()
