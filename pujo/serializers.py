@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from django.utils import timezone
 from .models import Pujo
-from django.db import models
 
 class PujoSerializer(serializers.ModelSerializer):
     name = serializers.CharField()
