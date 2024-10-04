@@ -1,4 +1,3 @@
-
 # Project Setup and Running Guide
 
 This guide will walk you through the steps required to set up and run the project using Taskfile. Make sure you have all the prerequisites installed before proceeding.
@@ -62,9 +61,10 @@ Once Task is installed, you can proceed with the setup.
    - Set up the `node-cron` service.
 
 3. Run the Application:
-    ```sh
-    python manage.py runserver
-    ```
+   ```sh
+   python manage.py runserver
+   ```
+
 ### Manual Setup (Optional)
 
 If you want to perform each step manually, follow these commands:
@@ -109,11 +109,11 @@ If you want to perform each step manually, follow these commands:
    python manage.py migrate
    ```
 
-6. **Run Django Server**:
+7. **Run Django Server**:
 
-    ```sh
-    python manage.py runserver
-    ```
+   ```sh
+   python manage.py runserver
+   ```
 
 8. **Set Up `node-cron`**:
 
@@ -127,14 +127,26 @@ If you want to perform each step manually, follow these commands:
 
 ## Running the Project
 
-After completing the setup steps, the services should be up and running.
+To run the server, use the following command
 
-- To check if the backend is running properly, you can access it on the designated URL (e.g., `http://localhost:8000` for Django).
+```sh
+task run_server
+```
+
+- To check if the backend is running properly, you can access it on the designated URL (e.g., `http://localhost:3000` for Django).
 - To stop the Docker services:
 
   ```sh
   docker-compose down
   ```
+
+## Stop the Project
+
+To stop the server, use the following command:
+
+```sh
+task stop_server
+```
 
 ## Troubleshooting
 
@@ -149,4 +161,3 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ## Contributing
 
 Feel free to submit issues and pull requests. Contributions are welcome!
-

@@ -12,5 +12,9 @@
     "dotenv": "^16.4.5",
     "node-cron": "^3.0.3",
     "pg": "^8.13.0"
+  },
+  "devDependencies": {
+    "@types/node-cron": "^3.0.11",
+    "@types/pg": "^8.11.10"
   }
 }
