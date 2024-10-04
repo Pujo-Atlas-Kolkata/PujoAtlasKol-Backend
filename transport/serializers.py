@@ -10,4 +10,10 @@ class TransportSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Transport
-        fields = "__all__"
+        fields ="__all__"
+
+
+class TransportReadSerializer(serializers.ModelSerializer):
+     class Meta:
+        model = Transport
+        fields = ['lat','lon','name','station_code','transport_type','line']

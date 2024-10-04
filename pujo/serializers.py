@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.utils import timezone
 from .models import Pujo
-from transport.serializers import TransportSerializer
+from transport.serializers import TransportReadSerializer
 
 class PujoSerializer(serializers.ModelSerializer):
     name = serializers.CharField()
@@ -47,10 +47,10 @@ class TrendingPujoSerializer(serializers.ModelSerializer):
     address = serializers.SerializerMethodField()
     city = serializers.SerializerMethodField()
     zone = serializers.SerializerMethodField()
-    transport = TransportSerializer()
+    transport = TransportReadSerializer()
     class Meta:
         model = Pujo
-        fields = ['id', 'lat','lon','zone', 'city', 'name', 'address', 'search_score', 'created_at', 'transport']
+        fields = ['id', 'lat','lon','zone', 'city', 'name', 'address', 'search_score', 'created_at', 'transport', 'nearest_transport_distance']
 
     def get_name(self, obj):
         return obj.formatted_name()

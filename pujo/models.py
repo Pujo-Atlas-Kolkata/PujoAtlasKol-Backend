@@ -21,6 +21,7 @@ class Pujo(models.Model):
     search_score=models.IntegerField(default=100)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(null = True)
+    nearest_transport_distance = models.FloatField(null=True, blank=True)
     transport = models.ForeignKey(Transport, related_name='pujos', on_delete=models.CASCADE, null=True, blank=True)
 
     def save(self, *args, **kwargs):
