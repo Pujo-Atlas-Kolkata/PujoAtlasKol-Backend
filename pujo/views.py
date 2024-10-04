@@ -162,7 +162,7 @@ class PujoViewSet(viewsets.ModelViewSet):
         self.check_object_permissions(request, user)
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            target_coords = (request.data['lat'], request.data['lon'])
+            target_coords = (float(request.data['lat']), float(request.data['lon']))
         
             # Fetch Transport Data
             transport_df = pd.DataFrame.from_records(Transport.objects.all().values('id', 'lat', 'lon'))
