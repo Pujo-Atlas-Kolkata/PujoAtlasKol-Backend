@@ -65,7 +65,7 @@ tasks:
         else
           source venv/bin/activate
           nohup node node-cron/index.js &
-          nohup python manage.py runserver &
+          nohup python3 manage.py runserver &
         fi
   desc: "Run both the Node.js cron job and the Django development server"
   stop_server:
