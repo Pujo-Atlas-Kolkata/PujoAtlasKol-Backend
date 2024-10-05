@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     'pandal',
     'pujo',
     'user',
-    'reviews'
+    'reviews',
+    'transport'
 ]
 
 AUTH_USER_MODEL = 'user.User'

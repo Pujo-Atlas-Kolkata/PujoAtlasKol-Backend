@@ -17,3 +17,5 @@ djangorestframework-simplejwt
 django-cors-headers
 minio==7.1.0
 black
+pandas
+haversine

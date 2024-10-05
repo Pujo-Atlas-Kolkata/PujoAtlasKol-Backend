@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Q
 from .models import Pujo, LastScoreModel
+from transport.models import Transport
 from .serializers import PujoSerializer, TrendingPujoSerializer, SearchedPujoSerializer, searchPujoSerializer
 from core.ResponseStatus import ResponseStatus
 import logging
@@ -13,6 +14,8 @@ import re
 from django.utils import timezone
 from django.db.models.functions import Coalesce, Cast
 from datetime import datetime
+from .helpers import find_nearest_transport
+import pandas as pd
 
 logger = logging.getLogger("pujo")
 
@@ -159,7 +162,20 @@ class PujoViewSet(viewsets.ModelViewSet):
         self.check_object_permissions(request, user)
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            target_coords = (float(request.data['lat']), float(request.data['lon']))
+        
+            # Fetch Transport Data
+            transport_df = pd.DataFrame.from_records(Transport.objects.all().values('id', 'lat', 'lon'))
+
+            if not transport_df.empty:
+                nearest_transport_id, nearest_distance = find_nearest_transport(transport_df, target_coords)
+            else:
+                nearest_transport_id = None
+                nearest_distance = None
+            
+            # Save Pujo with nearest transport_id
+            serializer.save(transport_id=nearest_transport_id, nearest_transport_distance=nearest_distance)
+            # serializer.save()
             response_data = {
                 'result': {'id': serializer.data["id"]},
                 'message':'Pujo created',

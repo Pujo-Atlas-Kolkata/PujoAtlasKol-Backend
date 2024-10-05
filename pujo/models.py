@@ -1,6 +1,6 @@
 from django.db import models
 import uuid
-from django.contrib.postgres.fields import ArrayField
+from transport.models import Transport
 
 class LastScoreModel(models.Model):
     pujo = models.ForeignKey('Pujo', related_name='last_scores', on_delete=models.CASCADE)
@@ -21,6 +21,8 @@ class Pujo(models.Model):
     search_score=models.IntegerField(default=100)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(null = True)
+    nearest_transport_distance = models.FloatField(null=True, blank=True)
+    transport = models.ForeignKey(Transport, related_name='pujos', on_delete=models.CASCADE, null=True, blank=True)
 
     def save(self, *args, **kwargs):
         self.name = self.name.lower()
