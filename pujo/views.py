@@ -13,7 +13,7 @@ from rest_framework import permissions
 import re
 from django.utils import timezone
 from django.db.models.functions import Coalesce, Cast
-from datetime import datetime
+from datetime import datetime, timedelta
 from .helpers import find_nearest_transport
 import pandas as pd
 
@@ -46,6 +46,33 @@ def generate_regex_combinations(word):
 
     return patterns
 
+
+def update_pujo_scores(array,minutes,penalty):
+    now = timezone.now()
+
+    for pujo in array:
+        if pujo.updated_at is None:
+            # Assuming pujo has never been updated, treat it as if it's the oldest
+            time_difference = timedelta(days=365 * 100)  # Assuming it hasn't been updated for a very long time
+        else:
+            time_difference = now - pujo.updated_at
+
+        if time_difference > timedelta(minutes=minutes):
+            pujo.search_score = max(pujo.search_score - penalty, 0)
+            pujo.save()
+
+
+def partition_array(arr):
+    n = len(arr)
+    part_size = n // 3  # Size of each part
+    remainder = n % 3    # Remainder when dividing by 3
+
+    # Create three parts
+    part1 = arr[:part_size + (1 if remainder > 0 else 0)]  # Add 1 if there's a remainder
+    part2 = arr[part_size + (1 if remainder > 0 else 0): part_size * 2 + (1 if remainder > 1 else 0)]
+    part3 = arr[part_size * 2 + (1 if remainder > 1 else 0):]
+
+    return part1, part2, part3
 
 class PujoViewSet(viewsets.ModelViewSet):
     queryset = Pujo.objects.all()
@@ -84,7 +111,7 @@ class PujoViewSet(viewsets.ModelViewSet):
     def trending(self, request, *args, **kwargs):
         try:
             # get pujos sorted by search score and updated_at
-            trending_pujos = Pujo.objects.annotate(updated_at_fallback=Coalesce('updated_at', timezone.make_aware(datetime(1970, 1, 1)))).order_by('-search_score', '-updated_at_fallback')[:10]
+            trending_pujos = Pujo.objects.order_by('-search_score')[:30]
 
             same_score_pujos = {}
         
@@ -110,14 +137,29 @@ class PujoViewSet(viewsets.ModelViewSet):
                     most_recent_pujo.save(update_fields=['search_score'])
                     most_recent_pujo.save()
                     LastScoreModel.objects.create(pujo=most_recent_pujo, value=1)
+            
+            # binning logic
+            top_4, middle_4, last_4 = partition_array(trending_pujos)
+            # update them scores
+            #top 4 has penalty of 30 if not updated within last 10 mins
+            update_pujo_scores(top_4,10,30) 
+            # middle 4 has penalty of 20 if not updated within last 15 mins
+            update_pujo_scores(middle_4,15,20)
+            #last 4 has a penalty of 10 if not updated with last 20 mins
+            update_pujo_scores(last_4,20,10)
 
-            serializer = TrendingPujoSerializer(trending_pujos, many=True)
+            updated_trending_pujos = Pujo.objects.order_by('-search_score')[:10]
+            
+            # sorted_trending = sorted(updated_trending_pujos, key=lambda x: x.search_score, reverse=True)
+
+            serializer = TrendingPujoSerializer(updated_trending_pujos, many=True)
             
             response_data = {
                 'result': serializer.data,
                 'message':'Trending pujo list fetched',
                 'status': ResponseStatus.SUCCESS.value
             }
+            
             return Response(response_data, status=status.HTTP_200_OK)
         
         except Exception as e:
@@ -308,7 +350,7 @@ class PujoTrendingIncreaseViewSet(viewsets.ModelViewSet):
                         LastScoreModel.objects.create(pujo=pujo, value=-1)
                         
                         if pujo.search_score > 0:
-                            pujo.search_score = pujo.search_score - 1
+                            pujo.search_score = pujo.search_score - 5
 
                         pujo.updated_at = timezone.now()
                         pujo.save()
