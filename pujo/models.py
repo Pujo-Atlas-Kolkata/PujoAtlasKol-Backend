@@ -18,7 +18,7 @@ class Pujo(models.Model):
     address = models.TextField()
     city = models.TextField()
     zone = models.CharField(max_length=100)
-    search_score=models.IntegerField(default=100)
+    search_score=models.FloatField(default=100.0)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(null = True)
     nearest_transport_distance = models.FloatField(null=True, blank=True)
