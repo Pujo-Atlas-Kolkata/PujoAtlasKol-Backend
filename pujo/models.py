@@ -25,4 +25,4 @@ class Pujo(models.Model):
     transport = models.ForeignKey(Transport, related_name='pujos', on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
-        return self.formatted_name()
+        return self.name()
