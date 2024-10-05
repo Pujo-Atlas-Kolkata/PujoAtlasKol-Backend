@@ -55,20 +55,38 @@ tasks:
     - python manage.py makemigrations
     - python manage.py migrate
     - |
-      cd node-cron && npm i && nohup node index.js &
+      cd node-cron && npm i
     desc: "Setup project environment: Docker, virtual environment, dependencies, migrations, and start node-cron service"
 
   run_server:
     cmds:
     - |
       if [ "$OS" = "Windows_NT" ]; then
-         cmd /C "venv\\Scripts\\activate && start /B node node-cron/index.js && start /B python manage.py runserver"
+        cmd /C "venv\\Scripts\\activate && python manage.py runserver"
       else
         source venv/bin/activate
-        nohup node node-cron/index.js &
-        nohup python3 manage.py runserver &
+        echo "Starting Django server..."
+        nohup python3 manage.py runserver > django-server.log 2>&1 &
+        if [ $? -eq 0 ]; then
+          echo "Django server is running."
+        else
+          echo "Failed to start Django server."
+        fi
       fi
-  desc: "Run both the Node.js cron job and the Django development server"
+    desc: "Run the Django development server"
+
+
+  run_scheduler:
+    cmds:
+    - |
+      if [ "$OS" = "Windows_NT" ]; then
+        cmd /C "start /B node node-cron/index.js "
+      else
+        nohup node node-cron/index.js &
+        echo "Node Cron attached"
+      fi
+    desc: "Run the Django development server"
+
   stop_server:
     cmds:
     - |

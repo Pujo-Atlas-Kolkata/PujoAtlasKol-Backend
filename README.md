@@ -60,10 +60,26 @@ Once Task is installed, you can proceed with the setup.
    - Run database migrations.
    - Set up the `node-cron` service.
 
-3. Run the Application:
-   ```sh
-   python manage.py runserver
-   ```
+3. Run the Application detached:
+   a. Unix based system
+
+      ```sh
+         nohup python3 manage.py runserver > django-server.log 2>&1 &
+      ```
+   b. Windows based system
+      ```sh
+         task run_server
+      ```
+4. Run the cron job detached:
+    a. Unix based system
+
+      ```sh
+         nohup node node-cron/index.js &
+      ```
+   b. Windows based system
+      ```sh
+         task run_scheduler
+      ```
 
 ### Manual Setup (Optional)
 
