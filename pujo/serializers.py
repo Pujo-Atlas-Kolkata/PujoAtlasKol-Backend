@@ -30,18 +30,6 @@ class PujoSerializer(serializers.ModelSerializer):
         instance.save()  
         return instance
     
-    def get_name(self, obj):
-        return obj.formatted_name()
-
-    def get_address(self, obj):
-        return obj.formatted_address()
-
-    def get_city(self, obj):
-        return obj.formatted_city()
-
-    def get_zone(self, obj):
-        return obj.formatted_zone()
-
 class TrendingPujoSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
     address = serializers.SerializerMethodField()
@@ -51,18 +39,6 @@ class TrendingPujoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pujo
         fields = ['id', 'lat','lon','zone', 'city', 'name', 'address', 'search_score', 'created_at', 'transport', 'nearest_transport_distance']
-
-    def get_name(self, obj):
-        return obj.formatted_name()
-
-    def get_address(self, obj):
-        return obj.formatted_address()
-
-    def get_city(self, obj):
-        return obj.formatted_city()
-
-    def get_zone(self, obj):
-        return obj.formatted_zone()
 
 class SearchedPujoSerializer(serializers.ModelSerializer):
     ids = serializers.ListField(
