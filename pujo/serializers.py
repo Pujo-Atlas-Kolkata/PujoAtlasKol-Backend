@@ -31,11 +31,6 @@ class PujoSerializer(serializers.ModelSerializer):
         return instance
     
 class TrendingPujoSerializer(serializers.ModelSerializer):
-    name = serializers.SerializerMethodField()
-    address = serializers.SerializerMethodField()
-    city = serializers.SerializerMethodField()
-    zone = serializers.SerializerMethodField()
-    transport = TransportReadSerializer()
     class Meta:
         model = Pujo
         fields = ['id', 'lat','lon','zone', 'city', 'name', 'address', 'search_score', 'created_at', 'transport', 'nearest_transport_distance']
