@@ -18,8 +18,11 @@ app.listen(PORT, () => {
 console.log("code run");
 
 // Schedule cron job to run every 6 hours  ==> 0 */6 * * *
-cron.schedule("0 */6 * * *", async () => {
-  console.log(`started at ${new Date()}`);
+// schedule cron job every 30 mins => */30 * * * *
+// schedule a cron at start of every hour => 0 * * * *
+cron.schedule("0 * * * *", async () => {
+  console.log("This cron job will running every 30 minutes");
+  console.log(`started at ${new Date()} - lastscoremodel`);
   // PostgreSQL credentials
   const client = new Client({
     user: process.env.DJANGO_DB_USER,
@@ -32,11 +35,13 @@ cron.schedule("0 */6 * * *", async () => {
   try {
     await client.connect(); // Open a new client for transaction
 
-    const X = 2;
+    const minutes = 30; //in minutes
     const currentTime = new Date();
-    const timeXHoursAgo = new Date(currentTime.getTime() - X * 60 * 60 * 1000);
-    const time2XHoursAgo = new Date(
-      currentTime.getTime() - 2 * X * 60 * 60 * 1000
+    const timeXMinutesAgo = new Date(
+      currentTime.getTime() - minutes * 60 * 1000
+    );
+    const time2XMinutesAgo = new Date(
+      currentTime.getTime() - 2 * minutes * 60 * 1000
     );
 
     // Start a transaction
@@ -47,10 +52,10 @@ cron.schedule("0 */6 * * *", async () => {
             SELECT * FROM pujo_pujo
             WHERE "updated_at" < $1
         `;
-    const pujos = await client.query(pujoQuery, [timeXHoursAgo]);
+    const pujos = await client.query(pujoQuery, [timeXMinutesAgo]);
 
     if (pujos.rows.length === 0) {
-      console.log("No pujos found for score update.");
+      console.log("No pujos found for score update - lastscoremodel");
     } else {
       for (const pujo of pujos.rows) {
         // Fetch positive LastScoreModel entries for the last 2X hours for this Pujo
@@ -60,7 +65,7 @@ cron.schedule("0 */6 * * *", async () => {
                 `;
         const lastScores = await client.query(lastScoresQuery, [
           pujo.id,
-          time2XHoursAgo,
+          time2XMinutesAgo,
         ]);
 
         // Sum all positive scores
@@ -82,7 +87,7 @@ cron.schedule("0 */6 * * *", async () => {
         ]);
 
         console.log(
-          `Updated pujo: ${pujo.id}, new search_score: ${newSearchScore}`
+          `Updated pujo: ${pujo.id}, new search_score: ${newSearchScore} - lastscoremodel`
         );
 
         // Delete all previous last scores for this pujo
@@ -96,7 +101,7 @@ cron.schedule("0 */6 * * *", async () => {
         ]);
 
         console.log(
-          `Deleted ${result.rowCount} rows from pujo_lastscoremodel for pujo_id ${pujo.id}`
+          `Deleted ${result.rowCount} rows from pujo_lastscoremodel for pujo_id ${pujo.id} - lastscoremodel`
         );
       }
     }
@@ -104,10 +109,85 @@ cron.schedule("0 */6 * * *", async () => {
     //check if it actually went through
     await client.query("COMMIT");
 
-    console.log(`Finished at ${new Date()}`);
+    console.log(`Finished at ${new Date()} - lastscoremodel`);
   } catch (error) {
     console.error("Error running update_pujo_scores:", error);
     //   await client.query("ROLLBACK");
+  } finally {
+    client.end();
+  }
+});
+
+function calculateMean(values) {
+  const sum = values.reduce((acc, val) => acc + val, 0);
+  return sum / values.length;
+}
+
+function calculateStandardDeviation(values, mean) {
+  const variance =
+    values.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) /
+    values.length;
+  return Math.sqrt(variance);
+}
+
+// Schedule a cron job to run every day at 12:10 AM
+cron.schedule("10 0 * * *", async () => {
+  console.log("This cron job will run every day at 12:10 AM");
+  console.log(`started at ${new Date()} - normalize score`);
+  // PostgreSQL credentials
+  const client = new Client({
+    user: process.env.DJANGO_DB_USER,
+    host: process.env.DJANGO_DB_HOST,
+    database: process.env.DJANGO_DB_NAME,
+    password: process.env.DJANGO_DB_PASSWORD,
+    port: process.env.DJANGO_DB_PORT,
+  });
+
+  try {
+    await client.connect(); // Open a new client for transaction
+
+    const currentDateTime = new Date();
+    //get all pujos
+    // Fetch Pujo objects not updated in the last X hours
+    const pujoQuery = `
+            SELECT * FROM pujo_pujo
+        `;
+    const pujos = await client.query(pujoQuery);
+    if (pujos.rows.length > 0) {
+      //zscorenormalization
+      const searchScores = pujos.rows.map((row) => row.search_score);
+      const mean = calculateMean(searchScores);
+      const stdDev = calculateStandardDeviation(searchScores, mean);
+
+      for (const pujo of pujos.rows) {
+        // (score - mean) / stdDev
+        const normalizedScore = (pujo.searchScores - mean) / stdDev;
+        const newSearchScore = 100 + normalizedScore;
+        //reset scores for all pujos => add normalized + 100
+        const updatePujoQuery = `
+        UPDATE pujo_pujo
+        SET search_score = $1, updated_at = $2
+        WHERE "id" = $3
+        `;
+
+        await client.query(updatePujoQuery, [
+          newSearchScore,
+          currentDateTime,
+          pujo.id,
+        ]);
+
+        console.log(
+          `Updated pujo: ${pujo.id}, new search_score: ${newSearchScore} - normalize score`
+        );
+
+        //check if it actually went through
+        await client.query("COMMIT");
+
+        console.log(`Finished at ${new Date()} - normalize score`);
+      }
+    }
+  } catch (e) {
+    console.error("Error normalizing scores:", error);
   } finally {
     client.end();
   }
