@@ -82,7 +82,16 @@ Once Task is installed, you can proceed with the setup.
       ```sh
          task run_scheduler
       ```
+### Validate Application Status
 
+   a. Django Server 
+   ```sh
+      localhost:3000/swagger
+   ```
+   b. node cron job
+   ```sh
+      localhost:4000/health
+   ```
 ### Manual Setup (Optional)
 
 If you want to perform each step manually, follow these commands:
