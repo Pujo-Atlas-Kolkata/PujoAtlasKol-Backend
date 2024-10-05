@@ -61,6 +61,7 @@ Once Task is installed, you can proceed with the setup.
    - Set up the `node-cron` service.
 
 3. Run the Application detached:
+
    a. Unix based system
 
       ```sh
@@ -71,6 +72,7 @@ Once Task is installed, you can proceed with the setup.
          task run_server
       ```
 4. Run the cron job detached:
+
     a. Unix based system
 
       ```sh
