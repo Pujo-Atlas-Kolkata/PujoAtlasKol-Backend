@@ -44,6 +44,9 @@ updated_at needs to be in this format => 2024-10-06 11:06:44.456247+00
 tau is in seconds
 significance of tau: tau controls the rate at which the score decays over time
 default to 1800 ==> 30 mins / this means that the score will decrease by approx 63% every 30 minutes
+tau is in seconds
+significance of tau: tau controls the rate at which the score decays over time
+default to 1800 ==> 30 mins / this means that the score will decrease by approx 63% every 30 minutes
 Purpose: To reduce the score of a venue over time
 Why: To prioritize recent interactions over older ones
 How: The score decreases exponentially as time passes
