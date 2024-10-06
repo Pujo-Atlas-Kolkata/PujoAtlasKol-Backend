@@ -106,19 +106,21 @@ cron.schedule("0 * * * *", async () => {
 });
 
 function calculateMean(values) {
+  console.log("calculating mean");
   const sum = values.reduce((acc, val) => acc + val, 0);
   return sum / values.length;
 }
 
 function calculateStandardDeviation(values, mean) {
+  console.log("calculating std deviance");
   const variance =
     values.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) /
     values.length;
   return Math.sqrt(variance);
 }
 
-// Schedule a cron job to run every day at 12:10 AM
-cron.schedule("10 0 * * *", async () => {
+// Schedule a cron job to run every day at 12:10 AM IST ==> 40 6 * * *
+cron.schedule("40 6 * * *", async () => {
   console.log("This cron job will run every day at 12:10 AM");
   console.log(`started at ${new Date()} - normalize score`);
   // PostgreSQL credentials
@@ -132,6 +134,7 @@ cron.schedule("10 0 * * *", async () => {
 
   try {
     await client.connect(); // Open a new client for transaction
+    console.log("connected to database");
 
     const currentDateTime = new Date();
     //get all pujos
@@ -140,22 +143,33 @@ cron.schedule("10 0 * * *", async () => {
             SELECT * FROM pujo_pujo
         `;
     const pujos = await client.query(pujoQuery);
+    console.log(`Fetched ${pujos.rows.length} pujos`);
+
     if (pujos.rows.length > 0) {
       //zscorenormalization
       const searchScores = pujos.rows.map((row) => row.search_score);
       const mean = calculateMean(searchScores);
+      console.log(`mean is ${mean}`);
       const stdDev = calculateStandardDeviation(searchScores, mean);
+      console.log(`std dev is ${stdDev}`);
 
       for (const pujo of pujos.rows) {
         // (score - mean) / stdDev
-        const normalizedScore = (pujo.searchScores - mean) / stdDev;
+        console.log(`current score is ${pujo.search_score}`);
+
+        const normalizedScore =
+          (pujo.search_score - mean) / (stdDev > 0 ? stdDev : 1);
+
+        console.log(
+          `normalized score: ${normalizedScore} for pujo id: ${pujo.id}`
+        );
         const newSearchScore = 100 + normalizedScore;
         //reset scores for all pujos => add normalized + 100
         const updatePujoQuery = `
-        UPDATE pujo_pujo
-        SET search_score = $1, updated_at = $2
-        WHERE "id" = $3
-        `;
+          UPDATE pujo_pujo
+          SET search_score = $1, updated_at = $2
+          WHERE "id" = $3
+          `;
 
         await client.query(updatePujoQuery, [
           newSearchScore,
@@ -174,7 +188,7 @@ cron.schedule("10 0 * * *", async () => {
       }
     }
   } catch (e) {
-    console.error("Error normalizing scores:", error);
+    console.error("Error normalizing scores:", e);
   } finally {
     client.end();
   }
