@@ -76,79 +76,84 @@ async function update_scores() {
     password: process.env.DJANGO_DB_PASSWORD,
     port: process.env.DJANGO_DB_PORT,
   });
+  try {
+    await client.connect(); // Open a new client for transaction
+    // Start a transaction
+    await client.query("BEGIN");
 
-  await client.connect(); // Open a new client for transaction
-  // Start a transaction
-  await client.query("BEGIN");
-
-  // Fetch Pujo objects not updated in the last X hours
-  const pujoQuery = `
+    // Fetch Pujo objects not updated in the last X hours
+    const pujoQuery = `
             SELECT * FROM pujo_pujo
             ORDER BY "search_score" DESC
             LIMIT 10;
         `;
-  const pujos = await client.query(pujoQuery);
-  let index = 0;
-  let updated_pujos = [];
-  let same_score_pujos = {};
-  if (pujos.rows.length === 0) {
-    console.log("No pujos found for score update - lastscoremodel");
-  } else {
-    for (const pujo of pujos.rows) {
-      // console.log(pujo);
-      const newScore = getScore(pujo, index);
-      pujo.search_score = Math.max(newScore, 0);
-      updated_pujos.push(pujo);
+    const pujos = await client.query(pujoQuery);
+    let index = 0;
+    let updated_pujos = [];
+    let same_score_pujos = {};
+    if (pujos.rows.length === 0) {
+      console.log("No pujos found for score update - lastscoremodel");
+    } else {
+      for (const pujo of pujos.rows) {
+        // console.log(pujo);
+        const newScore = getScore(pujo, index);
+        pujo.search_score = Math.max(newScore, 0);
+        updated_pujos.push(pujo);
 
-      updated_pujos.forEach((pujo) => {
-        const score = pujo.search_score;
+        updated_pujos.forEach((pujo) => {
+          const score = pujo.search_score;
 
-        if (!same_score_pujos[score]) {
-          same_score_pujos[score] = []; // Initialize the array if it doesn't exist
-        }
+          if (!same_score_pujos[score]) {
+            same_score_pujos[score] = []; // Initialize the array if it doesn't exist
+          }
 
-        same_score_pujos[score].push(pujo); // Add the pujo to the corresponding score array
-      });
+          same_score_pujos[score].push(pujo); // Add the pujo to the corresponding score array
+        });
 
-      for (const [score, pujos] of Object.entries(same_score_pujos)) {
-        if (pujos.length > 1) {
-          // More than one pujo with the same score
-          const mostRecentPujo = pujos.sort((a, b) => {
-            const updatedAtA = a.updated_at
-              ? new Date(a.updated_at)
-              : new Date(0); // Fallback to Jan 1, 1970
-            const updatedAtB = b.updated_at
-              ? new Date(b.updated_at)
-              : new Date(0); // Fallback to Jan 1, 1970
-            return updatedAtB - updatedAtA; // Sort in descending order
-          })[0]; // Get the most recent pujo
+        for (const [score, pujos] of Object.entries(same_score_pujos)) {
+          if (pujos.length > 1) {
+            // More than one pujo with the same score
+            const mostRecentPujo = pujos.sort((a, b) => {
+              const updatedAtA = a.updated_at
+                ? new Date(a.updated_at)
+                : new Date(0); // Fallback to Jan 1, 1970
+              const updatedAtB = b.updated_at
+                ? new Date(b.updated_at)
+                : new Date(0); // Fallback to Jan 1, 1970
+              return updatedAtB - updatedAtA; // Sort in descending order
+            })[0]; // Get the most recent pujo
 
-          mostRecentPujo.search_score += 1;
+            mostRecentPujo.search_score += 1;
 
-          if (!updated_pujos.includes(mostRecentPujo)) {
-            updated_pujos.push(mostRecentPujo);
+            if (!updated_pujos.includes(mostRecentPujo)) {
+              updated_pujos.push(mostRecentPujo);
+            }
           }
         }
+        index++;
       }
-      index++;
-    }
 
-    for (const pujo of updated_pujos) {
-      const updateQuery = `
+      for (const pujo of updated_pujos) {
+        const updateQuery = `
             UPDATE pujo_pujo
             SET search_score = $1
             WHERE id = $2;
         `;
-      try {
-        await client.query(updateQuery, [pujo.search_score, pujo.id]);
-      } catch (error) {
-        console.error(`Failed to update pujo with id ${pujo.id}:`, error);
+        try {
+          await client.query(updateQuery, [pujo.search_score, pujo.id]);
+        } catch (error) {
+          console.error(`Failed to update pujo with id ${pujo.id}:`, error);
+        }
       }
     }
-  }
 
-  //check if it actually went through
-  await client.query("COMMIT");
+    //check if it actually went through
+    await client.query("COMMIT");
+  } catch (e) {
+    console.error(e);
+  } finally {
+    client.end();
+  }
 }
 
 // Schedule cron job to run every 6 hours  ==> 0 */6 * * *
@@ -163,8 +168,6 @@ cron.schedule("0 * * * *", async () => {
   } catch (error) {
     console.error("Error running update_pujo_scores:", error);
     //   await client.query("ROLLBACK");
-  } finally {
-    client.end();
   }
 });
 
@@ -191,71 +194,75 @@ async function normalize_scores() {
     port: process.env.DJANGO_DB_PORT,
   });
 
-  await client.connect(); // Open a new client for transaction
-  console.log("connected to database");
+  try {
+    await client.connect(); // Open a new client for transaction
+    console.log("connected to database");
 
-  const currentDateTime = new Date();
-  //get all pujos
-  // Fetch Pujo objects not updated in the last X hours
-  const pujoQuery = `
+    const currentDateTime = new Date();
+    //get all pujos
+    // Fetch Pujo objects not updated in the last X hours
+    const pujoQuery = `
             SELECT * FROM pujo_pujo
         `;
-  const pujos = await client.query(pujoQuery);
-  console.log(`Fetched ${pujos.rows.length} pujos`);
+    const pujos = await client.query(pujoQuery);
+    console.log(`Fetched ${pujos.rows.length} pujos`);
 
-  if (pujos.rows.length > 0) {
-    //zscorenormalization
-    const searchScores = pujos.rows.map((row) => row.search_score);
-    const mean = calculateMean(searchScores);
-    console.log(`mean is ${mean}`);
-    const stdDev = calculateStandardDeviation(searchScores, mean);
-    console.log(`std dev is ${stdDev}`);
+    if (pujos.rows.length > 0) {
+      //zscorenormalization
+      const searchScores = pujos.rows.map((row) => row.search_score);
+      const mean = calculateMean(searchScores);
+      console.log(`mean is ${mean}`);
+      const stdDev = calculateStandardDeviation(searchScores, mean);
+      console.log(`std dev is ${stdDev}`);
 
-    for (const pujo of pujos.rows) {
-      // (score - mean) / stdDev
-      console.log(`current score is ${pujo.search_score}`);
+      for (const pujo of pujos.rows) {
+        // (score - mean) / stdDev
+        console.log(`current score is ${pujo.search_score}`);
 
-      const normalizedScore =
-        (pujo.search_score - mean) / (stdDev > 0 ? stdDev : 1);
+        const normalizedScore =
+          (pujo.search_score - mean) / (stdDev > 0 ? stdDev : 1);
 
-      console.log(
-        `normalized score: ${normalizedScore} for pujo id: ${pujo.id}`
-      );
-      const newSearchScore = 100 + normalizedScore;
-      //reset scores for all pujos => add normalized + 100
-      const updatePujoQuery = `
+        console.log(
+          `normalized score: ${normalizedScore} for pujo id: ${pujo.id}`
+        );
+        const newSearchScore = 100 + normalizedScore;
+        //reset scores for all pujos => add normalized + 100
+        const updatePujoQuery = `
           UPDATE pujo_pujo
           SET search_score = $1, updated_at = $2
           WHERE "id" = $3
           `;
 
-      await client.query(updatePujoQuery, [
-        newSearchScore,
-        currentDateTime,
-        pujo.id,
-      ]);
+        await client.query(updatePujoQuery, [
+          newSearchScore,
+          currentDateTime,
+          pujo.id,
+        ]);
 
-      console.log(
-        `Updated pujo: ${pujo.id}, new search_score: ${newSearchScore} - normalize score`
-      );
+        console.log(
+          `Updated pujo: ${pujo.id}, new search_score: ${newSearchScore} - normalize score`
+        );
 
-      //check if it actually went through
-      await client.query("COMMIT");
+        //check if it actually went through
+        await client.query("COMMIT");
 
-      console.log(`Finished at ${new Date()} - normalize score`);
+        console.log(`Finished at ${new Date()} - normalize score`);
+      }
     }
+  } catch (e) {
+    console.error(e);
+  } finally {
+    client.end();
   }
 }
 
 // Schedule a cron job to run every day at 12:10 AM IST ==> 40 6 * * *
-cron.schedule("50 6 * * *", async () => {
+cron.schedule("55 6 * * *", async () => {
   console.log("This cron job will run every day at 12:10 AM");
   console.log(`started at ${new Date()} - normalize score`);
   try {
     await normalize_scores();
   } catch (e) {
     console.error("Error normalizing scores:", e);
-  } finally {
-    client.end();
   }
 });
