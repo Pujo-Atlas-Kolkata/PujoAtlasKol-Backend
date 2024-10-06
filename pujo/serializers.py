@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.utils import timezone
 from .models import Pujo
-from transport.serializers import TransportReadSerializer
+from metro.serializers import MetroReadSerializer
 
 class PujoSerializer(serializers.ModelSerializer):
     name = serializers.CharField()
@@ -31,10 +31,18 @@ class PujoSerializer(serializers.ModelSerializer):
         return instance
     
 class TrendingPujoSerializer(serializers.ModelSerializer):
-    transport = TransportReadSerializer()
+    metro = MetroReadSerializer()
     class Meta:
         model = Pujo
-        fields = ['id', 'lat','lon','zone', 'city', 'name', 'address', 'search_score', 'created_at', 'transport', 'nearest_transport_distance']
+        fields = ['id', 'lat','lon','zone', 'city', 'name', 'address', 'search_score', 'metro']
+
+    def to_representation(self, instance):
+        # Get the original representation
+        representation = super().to_representation(instance)
+        if representation.get('metro') and instance.nearest_metro_distance is not None:
+            representation['metro']['distance'] = instance.nearest_metro_distance
+            representation['metro']['distance_unit'] = 'KMs'
+        return representation
 
 class SearchedPujoSerializer(serializers.ModelSerializer):
     ids = serializers.ListField(

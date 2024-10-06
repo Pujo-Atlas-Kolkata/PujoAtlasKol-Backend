@@ -33,7 +33,7 @@ urlpatterns = [
     path('api/token/refresh', CustomTokenRefreshView.as_view(), name='token_refresh'),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),  # OpenAPI schema
     path('swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    path('transport/',include('transport.urls')),
+    path('metro/',include('metro.urls')),
 ]
 
 if settings.DEBUG:

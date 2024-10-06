@@ -1,4 +1,6 @@
 from haversine import haversine
+from datetime import datetime, timezone
+import math
 
 """
     Find the nearest Transport record to the target coordinates.
@@ -36,4 +38,3 @@ def find_nearest_transport(df, target_coords):
 
     # Return the nearest transport
     return nearest_transport_id, nearest_distance
-    

@@ -42,12 +42,11 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     "corsheaders",
     'import_export',
-    'Log',
-    'pandal',
+    'systemLogs',
     'pujo',
     'user',
     'reviews',
-    'transport'
+    'metro'
 ]
 
 AUTH_USER_MODEL = 'user.User'
@@ -212,7 +211,7 @@ LOGGING = {
             'formatter': 'verbose',
         },
          'database': {
-            'class': 'Log.handlers.DatabaseLogHandler',
+            'class': 'systemLogs.handlers.DatabaseLogHandler',
             'formatter': 'verbose',
         },
     },

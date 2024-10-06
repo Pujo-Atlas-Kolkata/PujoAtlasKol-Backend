@@ -1,6 +1,6 @@
 from django.db import models
 import uuid
-from transport.models import Transport
+from metro.models import Metro
 
 class LastScoreModel(models.Model):
     pujo = models.ForeignKey('Pujo', related_name='last_scores', on_delete=models.CASCADE)
@@ -21,8 +21,8 @@ class Pujo(models.Model):
     search_score=models.FloatField(default=100.0)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(null = True)
-    nearest_transport_distance = models.FloatField(null=True, blank=True)
-    transport = models.ForeignKey(Transport, related_name='pujos', on_delete=models.CASCADE, null=True, blank=True)
+    nearest_metro_distance = models.FloatField(null=True, blank=True)
+    metro = models.ForeignKey(Metro, related_name='pujos', on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return self.name()
