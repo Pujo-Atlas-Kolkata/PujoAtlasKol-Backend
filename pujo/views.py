@@ -2,7 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Q
-from .models import Pujo, LastScoreModel
+from .models import Pujo
 from transport.models import Transport
 from .serializers import PujoSerializer, TrendingPujoSerializer, SearchedPujoSerializer, searchPujoSerializer
 from core.ResponseStatus import ResponseStatus
@@ -12,9 +12,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework import permissions
 import re
 from django.utils import timezone
-from django.db.models.functions import Coalesce, Cast
-from datetime import datetime, timedelta
-from .helpers import find_nearest_transport, get_score
+from .helpers import find_nearest_transport
 import pandas as pd
 
 logger = logging.getLogger("pujo")
