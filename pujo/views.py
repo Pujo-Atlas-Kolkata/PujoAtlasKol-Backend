@@ -14,7 +14,7 @@ import re
 from django.utils import timezone
 from django.db.models.functions import Coalesce, Cast
 from datetime import datetime, timedelta
-from .helpers import find_nearest_transport
+from .helpers import find_nearest_transport, get_score
 import pandas as pd
 
 logger = logging.getLogger("pujo")
@@ -84,37 +84,37 @@ class PujoViewSet(viewsets.ModelViewSet):
     def trending(self, request, *args, **kwargs):
         try:
             # get pujos sorted by search score and updated_at
-            trending_pujos = Pujo.objects.order_by('-search_score')[:10]
-
+            pujos = Pujo.objects.order_by('-search_score')[:10]
             same_score_pujos = {}
-        
-            for pujo in trending_pujos:
+            updated_pujos = []
+
+            # update scores of pujo 
+            for index, pujo in enumerate(pujos, start=1):
+                new_score = get_score(pujo, index)
+                pujo.search_score = new_score
+                updated_pujos.append(pujo)
+            
+            # group pujos by score
+            for pujo in updated_pujos:
                 score = pujo.search_score
                 if score not in same_score_pujos:
                     same_score_pujos[score] = []
                 same_score_pujos[score].append(pujo)
-
             
+        
             # Increment the search_score of the most recently updated pujo for scores with duplicates
             for score, pujos in same_score_pujos.items():
                 if len(pujos) > 1:  # More than one pujo with the same score
                     most_recent_pujo = sorted(pujos, key=lambda x: x.updated_at or timezone.make_aware(datetime(1970, 1, 1)), reverse=True)[0]
-                    # Sort by updated_at and get the most recent one
-                    last_score_array = most_recent_pujo.last_scores.all()
-                    # Check if the array length is 50, and if so, remove the first element
-                    if last_score_array.count() > 49:
-                        last_score_array.first().delete()
-
-                    # Create a new LastScoreModel entry
                     most_recent_pujo.search_score = most_recent_pujo.search_score + 1
-                    most_recent_pujo.save(update_fields=['search_score'])
-                    most_recent_pujo.save()
-                    LastScoreModel.objects.create(pujo=most_recent_pujo, value=1)
+                    if most_recent_pujo not in updated_pujos:
+                        updated_pujos.append(most_recent_pujo)
+            
+            
+            Pujo.objects.bulk_update(updated_pujos, ['search_score'])
             
             updated_trending_pujos = Pujo.objects.order_by('-search_score')[:10]
             
-            # sorted_trending = sorted(updated_trending_pujos, key=lambda x: x.search_score, reverse=True)
-
             serializer = TrendingPujoSerializer(updated_trending_pujos, many=True)
             
             response_data = {
@@ -304,14 +304,7 @@ class PujoTrendingIncreaseViewSet(viewsets.ModelViewSet):
                     })
                 
                 if term == 'search':
-                    for pujo_id, pujo in found_pujos.items():
-                        last_score_array = pujo.last_scores.all()
-                        # Check if the array length is 50, and if so, remove the first element
-                        if last_score_array.count() > 49:
-                            last_score_array.first().delete()
-                            
-                        LastScoreModel.objects.create(pujo=pujo, value=-1)
-                        
+                    for pujo_id, pujo in found_pujos.items():                        
                         if pujo.search_score > 0:
                             pujo.search_score = pujo.search_score - 5
 
@@ -328,12 +321,6 @@ class PujoTrendingIncreaseViewSet(viewsets.ModelViewSet):
                 if term == 'select':
                     # we already know length is one
                     for pujo_id, pujo in found_pujos.items():
-                        last_score_array = pujo.last_scores.all()
-                        # Check if the array length is 50, and if so, remove the first element
-                        if last_score_array.count() > 49:
-                            last_score_array.first().delete()
-                            
-                        LastScoreModel.objects.create(pujo=pujo, value=2)
                         # Increment clicked Pujo's score by 2
                         pujo.search_score += 2
                         pujo.updated_at = timezone.now()
@@ -349,12 +336,6 @@ class PujoTrendingIncreaseViewSet(viewsets.ModelViewSet):
 
                 elif term == 'navigate':
                     for pujo_id, pujo in found_pujos.items():
-                        last_score_array = pujo.last_scores.all()
-                        # Check if the array length is 50, and if so, remove the first element
-                        if last_score_array.count() > 49:
-                            last_score_array.first().delete()
-                        
-                        LastScoreModel.objects.create(pujo=pujo, value=3)
                         # Increment clicked Pujo's score by 2
                         pujo.search_score += 3
                         pujo.updated_at = timezone.now()

@@ -1,4 +1,6 @@
 from haversine import haversine
+from datetime import datetime, timezone
+import math
 
 """
     Find the nearest Transport record to the target coordinates.
@@ -36,4 +38,38 @@ def find_nearest_transport(df, target_coords):
 
     # Return the nearest transport
     return nearest_transport_id, nearest_distance
-    
+
+'''
+updated_at needs to be in this format => 2024-10-06 11:06:44.456247+00
+tau is in seconds, default to 1800 ==> 30 mins
+Purpose: To reduce the score of a venue over time
+Why: To prioritize recent interactions over older ones
+How: The score decreases exponentially as time passes
+'''
+def calculate_decay_factor(updated_time, tau=1800):
+    if updated_time is None:
+        return 1
+    else:
+        # Ensure updated_at is a datetime object and get the current time
+        if isinstance(updated_time, str):
+            updated_time = datetime.fromisoformat(updated_time)
+
+        now = datetime.now(timezone.utc)  
+        t = (now - updated_time).total_seconds() 
+        return math.exp(-t / tau)
+
+'''
+Purpose: To Promote less popular venue
+Why: To prevent dominant venues from always ranking first
+How: Add a bonus to venue with lower ranks
+Alpha => higher alpha will strongly promote less popular venues
+'''
+def calculate_novelty_bonus(index, alpha=0.1):
+    return alpha * (10 - (index))
+
+def get_score(venue, index):
+    # Decay factor and novelty bonus calculation
+    current_score = venue.search_score
+    decay_factor = calculate_decay_factor(venue.updated_at)
+    novelty_bonus = calculate_novelty_bonus(index)
+    return (current_score * decay_factor) + novelty_bonus
