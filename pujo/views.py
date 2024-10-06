@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Q
 from .models import Pujo
-from transport.models import Transport
+from metro.models import Metro
 from .serializers import PujoSerializer, TrendingPujoSerializer, SearchedPujoSerializer, searchPujoSerializer
 from core.ResponseStatus import ResponseStatus
 import logging
@@ -139,7 +139,7 @@ class PujoViewSet(viewsets.ModelViewSet):
             target_coords = (float(request.data['lat']), float(request.data['lon']))
         
             # Fetch Transport Data
-            transport_df = pd.DataFrame.from_records(Transport.objects.all().values('id', 'lat', 'lon'))
+            transport_df = pd.DataFrame.from_records(Metro.objects.all().values('id', 'lat', 'lon'))
 
             if not transport_df.empty:
                 nearest_transport_id, nearest_distance = find_nearest_transport(transport_df, target_coords)
@@ -148,7 +148,7 @@ class PujoViewSet(viewsets.ModelViewSet):
                 nearest_distance = None
             
             # Save Pujo with nearest transport_id
-            serializer.save(transport_id=nearest_transport_id, nearest_transport_distance=nearest_distance)
+            serializer.save(metro_id=nearest_transport_id, nearest_metro_distance=nearest_distance)
             # serializer.save()
             response_data = {
                 'result': {'id': serializer.data["id"]},

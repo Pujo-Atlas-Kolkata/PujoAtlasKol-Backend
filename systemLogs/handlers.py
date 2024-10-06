@@ -2,10 +2,10 @@ import logging
 
 class DatabaseLogHandler(logging.Handler):
     def emit(self, record):
-        from Log.models import Log
+        from systemLogs.models import SystemLogs
         user_id = getattr(record, 'user_id', None)
 
-        log_entry = Log(
+        log_entry = SystemLogs(
             level=record.levelname,
             message=record.getMessage(),
             module=record.module,

@@ -151,6 +151,7 @@ async function update_scores() {
     await client.query("COMMIT");
   } catch (e) {
     console.error(e);
+    await client.query("ROLLBACK");
   } finally {
     client.end();
   }
@@ -251,6 +252,7 @@ async function normalize_scores() {
     }
   } catch (e) {
     console.error(e);
+    await client.query("ROLLBACK");
   } finally {
     client.end();
   }

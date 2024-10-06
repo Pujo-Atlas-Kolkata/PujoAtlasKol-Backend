@@ -4,7 +4,7 @@ import uuid
 
 User = get_user_model()
 
-class Log(models.Model):
+class SystemLogs(models.Model):
     LOG_LEVEL_CHOICES = (
         ('INFO', 'Info'),
         ('DEBUG', 'Debug'),
