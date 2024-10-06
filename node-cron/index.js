@@ -247,8 +247,8 @@ async function normalize_scores() {
   }
 }
 
-// // Schedule a cron job to run every day at 12:10 AM IST ==> 40 6 * * *
-cron.schedule("40 6 * * *", async () => {
+// Schedule a cron job to run every day at 12:10 AM IST ==> 40 6 * * *
+cron.schedule("50 6 * * *", async () => {
   console.log("This cron job will run every day at 12:10 AM");
   console.log(`started at ${new Date()} - normalize score`);
   try {
