@@ -2,19 +2,10 @@ const { Client } = require("pg");
 const cron = require("node-cron");
 require("dotenv").config({ path: "../.env" });
 const express = require("express"); // Import Express
-
+const axios = require("axios");
 const app = express(); // Create an Express application
 const PORT = 4000; // Set the port for the Express server
 
-// Endpoint to say hello
-app.get("/health", (req, res) => {
-  res.send("Hello from Node Cron!");
-});
-
-// Start the Express server
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
 console.log("code run");
 
 /*
@@ -280,4 +271,14 @@ cron.schedule("0 19 * * * ", async () => {
   } catch (e) {
     console.error("Error normalizing scores:", e);
   }
+});
+
+// API
+
+// Endpoint to say hello
+// app.get("/health", async (req, res) => {});
+
+// Start the Express server
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 });

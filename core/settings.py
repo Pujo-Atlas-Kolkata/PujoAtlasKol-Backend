@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     'pujo',
     'user',
     'reviews',
-    'metro'
+    'metro',
+    'service'
 ]
 
 AUTH_USER_MODEL = 'user.User'
@@ -78,6 +79,7 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     "corsheaders.middleware.CorsMiddleware",
     "core.MiddleWares.middleware.LoggingMiddleware",
+    "core.MiddleWares.RestrictIPMiddleware.RestrictIPMiddleware",
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
