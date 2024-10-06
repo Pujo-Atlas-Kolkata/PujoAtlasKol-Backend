@@ -156,29 +156,30 @@ cron.schedule("40 6 * * *", async () => {
       for (const pujo of pujos.rows) {
         // (score - mean) / stdDev
         console.log(`current score is ${pujo.search_score}`);
-        if (stdDev > 0) {
-          const normalizedScore = (pujo.search_score - mean) / stdDev;
-          console.log(
-            `normalized score: ${normalizedScore} for pujo id: ${pujo.id}`
-          );
-          const newSearchScore = 100 + normalizedScore;
-          //reset scores for all pujos => add normalized + 100
-          const updatePujoQuery = `
+
+        const normalizedScore =
+          (pujo.search_score - mean) / (stdDev > 0 ? stdDev : 1);
+
+        console.log(
+          `normalized score: ${normalizedScore} for pujo id: ${pujo.id}`
+        );
+        const newSearchScore = 100 + normalizedScore;
+        //reset scores for all pujos => add normalized + 100
+        const updatePujoQuery = `
           UPDATE pujo_pujo
           SET search_score = $1, updated_at = $2
           WHERE "id" = $3
           `;
 
-          await client.query(updatePujoQuery, [
-            newSearchScore,
-            currentDateTime,
-            pujo.id,
-          ]);
+        await client.query(updatePujoQuery, [
+          newSearchScore,
+          currentDateTime,
+          pujo.id,
+        ]);
 
-          console.log(
-            `Updated pujo: ${pujo.id}, new search_score: ${newSearchScore} - normalize score`
-          );
-        }
+        console.log(
+          `Updated pujo: ${pujo.id}, new search_score: ${newSearchScore} - normalize score`
+        );
 
         //check if it actually went through
         await client.query("COMMIT");
