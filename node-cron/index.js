@@ -98,13 +98,14 @@ async function update_scores() {
       for (const pujo of pujos.rows) {
         const currentDateTime = new Date();
         const backupScoreQuery = `
-        INSERT INTO pujo_lastscoremodel (value, last_updated_at, pujo_id) 
-        VALUES ($1, $2, $3)
+        INSERT INTO pujo_lastscoremodel (value, last_updated_at, pujo_id, name) 
+        VALUES ($1, $2, $3, $4)
         `;
         await client.query(backupScoreQuery, [
           pujo.search_score,
           currentDateTime,
           pujo.id,
+          pujo.name,
         ]);
         const newScore = getScore(pujo, index);
         pujo.search_score = Math.max(newScore, 0);

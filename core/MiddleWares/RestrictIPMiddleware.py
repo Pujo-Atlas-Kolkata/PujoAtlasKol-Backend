@@ -44,6 +44,7 @@ class RestrictIPMiddleware:
         
         # Check for /service/health endpoint (allowed only for Cloudflare IPs)
         if request.path == "/service/health":
+            time = datetime.now()
             print(f"{time} requester ip: {ip}")
             if not (ip in self.cloudflare_ipv4 or ip in self.cloudflare_ipv6 or ip in ips_list):
                 return HttpResponseForbidden("Access Denied")
@@ -56,6 +57,13 @@ class RestrictIPMiddleware:
                 return HttpResponseForbidden("Access Denied")
             
         if request.path == "/service/logs":
+            time = datetime.now()
+            print(f"{time} requester ip: {ip}")
+            if ip not in ips_list:
+                return HttpResponseForbidden("Access Denied")
+            
+        if request.path == "/service/trends":
+            time = datetime.now()
             print(f"{time} requester ip: {ip}")
             if ip not in ips_list:
                 return HttpResponseForbidden("Access Denied")
