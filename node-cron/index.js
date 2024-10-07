@@ -1,12 +1,25 @@
 const { Client } = require("pg");
 const cron = require("node-cron");
 require("dotenv").config({ path: "../.env" });
+// const Minio = require("minio");
+// const Papa = require("papaparse");
 const express = require("express"); // Import Express
-const axios = require("axios");
 const app = express(); // Create an Express application
 const PORT = 4000; // Set the port for the Express server
-
+const cron_logs = [];
 console.log("code run");
+let job_in_progress = false;
+
+function AddToCronLogs(message) {
+  cron_logs.push({
+    id: null,
+    level: "INFO",
+    message,
+    module: "CRON JOBS",
+    user_id: null,
+    created_at: new Date(),
+  });
+}
 
 /*
 updated_at needs to be in this format => 2024-10-06 11:06:44.456247+00
@@ -47,31 +60,13 @@ function calculateNoveltyBonus(index, alpha = 0.5) {
 function getScore(venue, index) {
   // Decay factor and novelty bonus calculation
   const currentScore = venue.search_score;
-  console.log(`current score: ${currentScore}`);
-
   const decayFactor = calculateDecayFactor(venue.updated_at);
   const noveltyBonus = calculateNoveltyBonus(index);
-
   const newScore = currentScore * decayFactor + noveltyBonus;
-  console.log(`new score: ${newScore}`);
 
   return parseFloat(newScore.toFixed(2));
 }
 
-//     {
-//   id: '679add7a-fa15-496d-a2b1-b917a432fc3e',
-//   name: 'Mohit Moitra Mancha',
-//   lat: 22.612299,
-//   lon: 88.382918,
-//   address: '34/1, 13/1/2, Raja Manindra Rd, Jora Mandir, Gangulipara, Paikpara, Kolkata, West Bengal 700059',
-//   city: 'Kolkata',
-//   zone: 'CCU-N',
-//   search_score: 100,
-//   created_at: 2024-10-06T01:12:19.581Z,
-//   updated_at: 2024-10-06T01:17:08.031Z,
-//   nearest_transport_distance: 0.8027723109124077,
-//   transport_id: 'cdd76e65-62a3-4f68-9cca-6278a6eeeafe'
-// }
 async function update_scores() {
   const client = new Client({
     user: process.env.DJANGO_DB_USER,
@@ -92,14 +87,14 @@ async function update_scores() {
             LIMIT 10;
         `;
     const pujos = await client.query(pujoQuery);
+    AddToCronLogs(`fetched ${pujos.rows.length} pujos - lastscoremodel`);
     let index = 0;
     let updated_pujos = [];
     let same_score_pujos = {};
     if (pujos.rows.length === 0) {
-      console.log("No pujos found for score update - lastscoremodel");
+      AddToCronLogs("No pujos found for score update - lastscoremodel");
     } else {
       for (const pujo of pujos.rows) {
-        // console.log(pujo);
         const newScore = getScore(pujo, index);
         pujo.search_score = Math.max(newScore, 0);
         updated_pujos.push(pujo);
@@ -161,29 +156,14 @@ async function update_scores() {
   }
 }
 
-// Schedule cron job to run every 6 hours  ==> 0 */6 * * *
-// schedule cron job every 30 mins => */30 * * * *
-// schedule a cron at start of every hour => 0 * * * *
-cron.schedule("0 * * * *", async () => {
-  console.log("This cron job will running every hour");
-  console.log(`started at ${new Date()} - lastscoremodel`);
-  // PostgreSQL credentials
-  try {
-    await update_scores();
-  } catch (error) {
-    console.error("Error running update_pujo_scores:", error);
-    //   await client.query("ROLLBACK");
-  }
-});
-
 function calculateMean(values) {
-  console.log("calculating mean");
+  AddToCronLogs("calculating mean");
   const sum = values.reduce((acc, val) => acc + val, 0);
   return sum / values.length;
 }
 
 function calculateStandardDeviation(values, mean) {
-  console.log("calculating std deviance");
+  AddToCronLogs("calculating std deviance");
   const variance =
     values.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) /
     values.length;
@@ -201,7 +181,7 @@ async function normalize_scores() {
 
   try {
     await client.connect(); // Open a new client for transaction
-    console.log("connected to database");
+    AddToCronLogs("connected to database");
 
     const currentDateTime = new Date();
     //get all pujos
@@ -210,26 +190,21 @@ async function normalize_scores() {
             SELECT * FROM pujo_pujo
         `;
     const pujos = await client.query(pujoQuery);
-    console.log(`Fetched ${pujos.rows.length} pujos`);
+    AddToCronLogs(`Fetched ${pujos.rows.length} pujos`);
 
     if (pujos.rows.length > 0) {
       //zscorenormalization
       const searchScores = pujos.rows.map((row) => row.search_score);
       const mean = calculateMean(searchScores);
-      console.log(`mean is ${mean}`);
+      AddToCronLogs(`mean is ${mean}`);
       const stdDev = calculateStandardDeviation(searchScores, mean);
-      console.log(`std dev is ${stdDev}`);
+      AddToCronLogs(`std dev is ${stdDev}`);
 
       for (const pujo of pujos.rows) {
         // (score - mean) / stdDev
-        console.log(`current score is ${pujo.search_score}`);
-
         const normalizedScore =
           (pujo.search_score - mean) / (stdDev > 0 ? stdDev : 1);
 
-        console.log(
-          `normalized score: ${normalizedScore} for pujo id: ${pujo.id}`
-        );
         const newSearchScore = 100 + normalizedScore;
         //reset scores for all pujos => add normalized + 100
         const updatePujoQuery = `
@@ -244,14 +219,8 @@ async function normalize_scores() {
           pujo.id,
         ]);
 
-        console.log(
-          `Updated pujo: ${pujo.id}, new search_score: ${newSearchScore} - normalize score`
-        );
-
         //check if it actually went through
         await client.query("COMMIT");
-
-        console.log(`Finished at ${new Date()} - normalize score`);
       }
     }
   } catch (e) {
@@ -262,21 +231,144 @@ async function normalize_scores() {
   }
 }
 
+// async function uploadLogsToMinIO() {
+//   // Create a MinIO client
+//   const minioClient = new Minio.Client({
+//     endPoint: process.env.MINIO_URL,
+//     port: 9000, // Default MinIO port
+//     useSSL: false, // Set to true if using SSL
+//     accessKey: process.env.MINIO_ACCESS_KEY,
+//     secretKey: process.env.MINIO_SECRET_KEY,
+//   });
+
+//   // Create a MySQL connection (adjust for your database)
+//   const client = new Client({
+//     user: process.env.DJANGO_DB_USER,
+//     host: process.env.DJANGO_DB_HOST,
+//     database: process.env.DJANGO_DB_NAME,
+//     password: process.env.DJANGO_DB_PASSWORD,
+//     port: process.env.DJANGO_DB_PORT,
+//   });
+
+//   try {
+//     await client.connect();
+//     console.log("connected to database");
+// const currentDateTime = new Date();
+// const twentyMinutesAgo = new Date(
+//   currentDateTime.getTime() - 20 * 60 * 1000
+// );
+// const query = `SELECT * FROM systemLogs_systemlogs WHERE created_at >= $1`;
+// const logs = await client.query(query, [twentyMinutesAgo]);
+//     console.log(`Fetched ${logs.rows.length} logs`);
+
+//     const csv = Papa.unparse(results);
+
+//     const fileName = `logs/logs_${Date.now()}.csv`;
+
+//     await minioClient
+//       .putObject(process.env.MINIO_BUCKET_NAME, fileName, csv)
+//       .then(async (res) => {
+//         console.log(`Upload success`);
+//         try {
+//           const query = `DELETE FROM systemLogs_systemlogs WHERE created_at >= $1`;
+//           await client.query(query, [twentyMinutesAgo]);
+//         } catch (e) {
+//           client.query("ROLLBACK");
+//         }
+//       })
+//       .catch((e) => {
+//         if (err) {
+//           console.error(`Error uploading: ${err}`);
+//         }
+//       });
+//     await client.query("COMMIT");
+//   } catch (e) {
+//     console.error(`Error: ${e}`);
+//     client.query("ROLLBACK");
+//   } finally {
+//     client.end();
+//   }
+// }
+
+// Schedule cron job to run every 6 hours  ==> 0 */6 * * *
+// schedule cron job every 30 mins => */30 * * * *
+// schedule a cron at start of every hour => 0 * * * *
+cron.schedule("0 * * * *", async () => {
+  job_in_progress = true;
+  AddToCronLogs("This cron job will run every hour");
+  AddToCronLogs(`started at ${new Date()} - lastscoremodel`);
+  // PostgreSQL credentials
+  try {
+    await update_scores();
+  } catch (error) {
+    AddToCronLogs(`Error running update_pujo_scores: ${error}`);
+    //   await client.query("ROLLBACK");
+  }
+  job_in_progress = false;
+});
+
 // Schedule a cron job to run every day at 12:10 AM IST ==> 40 6 * * *
 cron.schedule("0 19 * * * ", async () => {
-  console.log("This cron job will run every day at 12:10 AM");
-  console.log(`started at ${new Date()} - normalize score`);
+  job_in_progress = true;
+  AddToCronLogs("This cron job will run every day at 12:10 AM");
+  AddToCronLogs(`started at ${new Date()} - normalize score`);
   try {
     await normalize_scores();
   } catch (e) {
     console.error("Error normalizing scores:", e);
   }
+  job_in_progress = false;
 });
 
 // API
+const ALLOWED_IP = process.env.ALLOWED_IP_NODE;
+
+const restrictAccess = (req, res, next) => {
+  const requestIP = req.ip || req.connection.remoteAddress;
+  // Check if the request IP matches the allowed IP
+  if (requestIP === ALLOWED_IP) {
+    return next(); // Allow access
+  } else {
+    return res.status(403).json({ message: "Access denied" }); // Deny access
+  }
+};
 
 // Endpoint to say hello
-// app.get("/health", async (req, res) => {});
+app.get("/log", restrictAccess, async (req, res) => {
+  if (!job_in_progress) {
+    const client = new Client({
+      user: process.env.DJANGO_DB_USER,
+      host: process.env.DJANGO_DB_HOST,
+      database: process.env.DJANGO_DB_NAME,
+      password: process.env.DJANGO_DB_PASSWORD,
+      port: process.env.DJANGO_DB_PORT,
+    });
+    await client.connect();
+    const currentDateTime = new Date();
+    const twentyMinutesAgo = new Date(
+      currentDateTime.getTime() - 20 * 60 * 1000
+    );
+    const query = `SELECT * FROM "systemLogs_systemlogs" WHERE created_at >= $1`;
+    const logs = await client.query(query, [twentyMinutesAgo]);
+    AddToCronLogs(`fetched ${logs.rows.length} logs`);
+    cron_logs.push(logs.rows);
+
+    res.json({
+      message: "success",
+      system_logs: cron_logs,
+    });
+
+    const deletequery = `DELETE FROM systemLogs_systemlogs WHERE created_at >= $1`;
+    await client.query(deletequery, [twentyMinutesAgo]);
+    cron_logs = [];
+    return;
+  } else {
+    res.json({
+      message: "job in progress",
+      system_logs: [],
+    });
+  }
+});
 
 // Start the Express server
 app.listen(PORT, () => {

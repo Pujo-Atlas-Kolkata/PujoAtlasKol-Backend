@@ -15,4 +15,5 @@ health = ServiceViewSet.as_view({
     # path('search', PujoSearchViewSet.as_view({'post':'search_pujo'}), name="search-pujo")
 urlpatterns = [
     path('health', health, name='health'),
+    path('logs', ServiceViewSet.as_view({'get':'get_logs'}), name="logs")
 ]

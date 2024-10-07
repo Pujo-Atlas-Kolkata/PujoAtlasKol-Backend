@@ -1,32 +1,59 @@
 from django.http import HttpResponseForbidden
-import re
+from django.core.cache import cache
+from decouple import config
 
-ALLOWED_IPS_Health_check = ["127.0.0.1"]  # Add more IPs if necessary
-
-ALLOWED_IPS_swagger = ["127.0.0.1"]
-
+# Retrieve allowed IPs for Swagger
+allowed_ips = config("SWAGGER_ALLOWED_IPS", default="")
+ips_list = [ip.strip() for ip in allowed_ips.split(",") if ip.strip()]
 
 class RestrictIPMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
+        self.key_ipv4 = "ipv4_cidrs"
+        self.key_ipv6 = "ipv6_cidrs"
+        
+        # Initialize Cloudflare IPs for IPv4 and IPv6
+        self.cloudflare_ipv4 = self.get_cloudflare_ips('V4', self.key_ipv4)
+        self.cloudflare_ipv6 = self.get_cloudflare_ips('V6', self.key_ipv6)
+
+    def get_cloudflare_ips(self, ip_type, cache_key):
+        # Try to get IPs from cache
+        ips = cache.get(cache_key)
+        
+        if ips is None:
+            # Retrieve IPs from environment variables
+            if ip_type == "V4":
+                ips = config("V4_CIDRS", default="").split(",")
+            else:
+                ips = config("V6_CIDRS", default="").split(",")
+
+            # Clean up and cache the IPs
+            ips = [ip.strip() for ip in ips if ip.strip()]
+            cache.set(cache_key, ips)
+        
+        return ips
 
     def __call__(self, request):
+        # Get the client IP address
         x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
-        print(x_forwarded_for)
         if x_forwarded_for:
             ip = x_forwarded_for.split(",")[0].strip()
         else:
             ip = request.META.get("REMOTE_ADDR")
-
         
-        
+        # Check for /service/health endpoint (allowed only for Cloudflare IPs)
         if request.path == "/service/health":
-            if ip not in ALLOWED_IPS_Health_check:
+            if not (ip in self.cloudflare_ipv4 or ip in self.cloudflare_ipv6):
+                return HttpResponseForbidden("Access Denied")
+
+        # Check for /swagger/ endpoint (allowed only for specific IPs)
+        if request.path == "/swagger/":
+            if ip not in ips_list:
                 return HttpResponseForbidden("Access Denied")
             
-        if request.path == "/swagger/":
-            if ip not in ALLOWED_IPS_swagger:
+        if request.path == "/service/logs":
+            if ip not in ips_list:
                 return HttpResponseForbidden("Access Denied")
         
-        response = self.get_response(request)
-        return response
+        # Proceed to the next middleware/view
+        return self.get_response(request)

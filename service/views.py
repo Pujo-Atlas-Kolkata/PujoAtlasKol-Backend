@@ -11,13 +11,19 @@ import platform
 import os
 from datetime import datetime, timedelta
 from django.db import connection
+from decouple import config
+import http.client
+import json
+import csv
+from django.http import HttpResponse
+from io import StringIO
+from datetime import datetime
+
 
 APP_START_TIME = datetime.now()
 
 class ServiceViewSet(viewsets.ModelViewSet):
-    permission_classes=[IsSuperOrAdminUser]
-    authentication_classes = [JWTAuthentication]
-
+   
     def get_permissions(self):
         if self.action in ['health_check']:
             # Allow anyone to see list,trending and retreive
@@ -37,7 +43,7 @@ class ServiceViewSet(viewsets.ModelViewSet):
         data["uptime"] = str(timedelta(seconds=uptime.total_seconds()))
 
         # Application version (can be set in an environment variable)
-        data["app_version"] = os.getenv("APP_VERSION", "1.0.0")
+        data["app_version"] = os.getenv("APP_VERSION", "1.1.0")
 
         # Django version
         data["django_version"] = django.get_version()
@@ -63,6 +69,76 @@ class ServiceViewSet(viewsets.ModelViewSet):
 
         return Response(response_data, status=status_code)
 
-    
+    def get_logs(request, *args, **kwargs):
+        url = config('NODE_API_URL')
+        endpoint = config('NODE_ENDPOINT')
 
+        try:
+            connection = http.client.HTTPConnection(url)
+            connection.request("GET", endpoint)
+            response = connection.getresponse()
 
+            if response.status == 200:
+                data = response.read().decode('utf-8')
+                try:
+                    parsed_data = json.loads(data)
+                except json.JSONDecodeError as e:
+                    print("Failed to decode JSON:", e)
+                connection.close()
+
+                # Debugging: Print the raw data and parsed data
+                # print("Raw data from API:", data)  # Show raw data
+                # print("Parsed data:", parsed_data)  # Show parsed data
+
+                if not isinstance(parsed_data, dict):
+                    return Response({'error': 'Unexpected data format'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+                # Check if the 'result' key exists
+                if 'system_logs' not in parsed_data:
+                    return Response({'error': 'No system_logs key in response'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+                # Extract the system_logs from the parsed data
+                system_logs = parsed_data.get('system_logs')
+
+                message = parsed_data.get('message')
+               
+                if not system_logs:  # This will be True if system_logs is an empty list
+                    return Response({'error': message}, status=status.HTTP_200_OK)
+
+                # Prepare in-memory CSV file
+                csv_file = StringIO()
+                writer = csv.writer(csv_file)
+
+                # Ensure system_logs is a list before proceeding
+                if isinstance(system_logs, list) and system_logs:
+                    # Write header (keys of the first dict)
+                    writer.writerow(system_logs[0].keys())
+                    # Write the rows (values)
+                    for row in system_logs:
+                        writer.writerow(row.values())
+
+                    # Get the current date and time for the file name
+                    now = datetime.now().strftime("%Y-%m-%d_%H-%M")
+                    file_name = f"logs_{now}.csv"
+
+                    # Prepare HttpResponse with CSV content and dynamic file name
+                    csv_response = HttpResponse(content_type='text/csv')
+                    csv_response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+                    csv_response.write(csv_file.getvalue())
+                    csv_file.close()  # Close the StringIO
+
+                    csv_response['X-Message'] = message
+
+                    # Return the CSV file response
+                    return csv_response
+
+                else:
+                    connection.close()
+                    return Response({'error': 'No logs found or unexpected data format'}, status=status.HTTP_400_BAD_REQUEST)
+
+            else:
+                connection.close()
+                return Response({'error': 'Failed to fetch logs'}, status=response.status)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
