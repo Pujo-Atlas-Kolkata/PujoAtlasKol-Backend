@@ -341,11 +341,7 @@ const restrictAccess = (req, res, next) => {
   const normalizedRequestIP = normalizeIP(requestIP);
   const normalizedAllowedIP = normalizeIP(ALLOWED_IP);
   // Check if the request IP matches the allowed IP
-  console.log(
-    normalizedRequestIP,
-    normalizedAllowedIP,
-    normalizedRequestIP === normalizedAllowedIP
-  );
+
   if (normalizedRequestIP === normalizedAllowedIP) {
     return next(); // Allow access
   } else {
