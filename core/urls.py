@@ -34,6 +34,7 @@ urlpatterns = [
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),  # OpenAPI schema
     path('swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('metro/',include('metro.urls')),
+    path("service/", include('service.urls'))
 ]
 
 if settings.DEBUG:
