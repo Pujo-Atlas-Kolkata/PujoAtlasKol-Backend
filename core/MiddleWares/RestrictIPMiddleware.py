@@ -23,9 +23,9 @@ class RestrictIPMiddleware:
         if ips is None:
             # Retrieve IPs from environment variables
             if ip_type == "V4":
-                ips = config("V4_CIDRS", default="").split(",")
+                ips = [cidr.strip() for cidr in config("V4_CIDRS", default="").split(",") if cidr.strip()]
             else:
-                ips = config("V6_CIDRS", default="").split(",")
+                ips = [cidr.strip() for cidr in config("V6_CIDRS", default="").split(",") if cidr.strip()]
 
             # Clean up and cache the IPs
             ips = [ip.strip() for ip in ips if ip.strip()]
@@ -43,7 +43,7 @@ class RestrictIPMiddleware:
         
         # Check for /service/health endpoint (allowed only for Cloudflare IPs)
         if request.path == "/service/health":
-            if not (ip in self.cloudflare_ipv4 or ip in self.cloudflare_ipv6):
+            if not (ip in self.cloudflare_ipv4 or ip in self.cloudflare_ipv6 or ip in ips_list):
                 return HttpResponseForbidden("Access Denied")
 
         # Check for /swagger/ endpoint (allowed only for specific IPs)
