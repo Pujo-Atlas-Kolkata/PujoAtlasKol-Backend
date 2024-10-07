@@ -96,6 +96,16 @@ async function update_scores() {
       AddToCronLogs("No pujos found for score update - lastscoremodel");
     } else {
       for (const pujo of pujos.rows) {
+        const currentDateTime = new Date();
+        const backupScoreQuery = `
+        INSERT INTO pujo_lastscoremodel (value, last_updated_at, pujo_id) 
+        VALUES ($1, $2, $3)
+        `;
+        await client.query(backupScoreQuery, [
+          pujo.search_score,
+          currentDateTime,
+          pujo.id,
+        ]);
         const newScore = getScore(pujo, index);
         pujo.search_score = Math.max(newScore, 0);
         updated_pujos.push(pujo);
@@ -309,17 +319,17 @@ cron.schedule("0 * * * *", async () => {
 });
 
 // Schedule a cron job to run every day at 12:10 AM IST ==> 40 6 * * *
-cron.schedule("0 19 * * * ", async () => {
-  job_in_progress = true;
-  AddToCronLogs("This cron job will run every day at 12:10 AM");
-  AddToCronLogs(`started at ${new Date()} - normalize score`);
-  try {
-    await normalize_scores();
-  } catch (e) {
-    console.error("Error normalizing scores:", e);
-  }
-  job_in_progress = false;
-});
+// cron.schedule("0 19 * * * ", async () => {
+//   job_in_progress = true;
+//   AddToCronLogs("This cron job will run every day at 12:10 AM");
+//   AddToCronLogs(`started at ${new Date()} - normalize score`);
+//   try {
+//     await normalize_scores();
+//   } catch (e) {
+//     console.error("Error normalizing scores:", e);
+//   }
+//   job_in_progress = false;
+// });
 
 // API
 const ALLOWED_IP = process.env.PROD_ALLOWED_IP_NODE;

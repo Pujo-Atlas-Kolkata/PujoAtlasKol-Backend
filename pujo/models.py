@@ -4,7 +4,7 @@ from metro.models import Metro
 
 class LastScoreModel(models.Model):
     pujo = models.ForeignKey('Pujo', related_name='last_scores', on_delete=models.CASCADE)
-    value = models.IntegerField()
+    value = models.FloatField()
     last_updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):

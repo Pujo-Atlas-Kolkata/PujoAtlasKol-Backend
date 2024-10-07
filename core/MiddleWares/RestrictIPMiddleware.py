@@ -1,6 +1,7 @@
 from django.http import HttpResponseForbidden
 from django.core.cache import cache
 from decouple import config
+from datetime import datetime
 
 # Retrieve allowed IPs for Swagger
 allowed_ips = config("SWAGGER_ALLOWED_IPS", default="")
@@ -43,15 +44,19 @@ class RestrictIPMiddleware:
         
         # Check for /service/health endpoint (allowed only for Cloudflare IPs)
         if request.path == "/service/health":
+            print(f"{time} requester ip: {ip}")
             if not (ip in self.cloudflare_ipv4 or ip in self.cloudflare_ipv6 or ip in ips_list):
                 return HttpResponseForbidden("Access Denied")
 
         # Check for /swagger/ endpoint (allowed only for specific IPs)
         if request.path == "/swagger/":
+            time = datetime.now()
+            print(f"{time} requester ip: {ip}")
             if ip not in ips_list:
                 return HttpResponseForbidden("Access Denied")
             
         if request.path == "/service/logs":
+            print(f"{time} requester ip: {ip}")
             if ip not in ips_list:
                 return HttpResponseForbidden("Access Denied")
         
