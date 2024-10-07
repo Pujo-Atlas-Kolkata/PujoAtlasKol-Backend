@@ -6,7 +6,7 @@ require("dotenv").config({ path: "../.env" });
 const express = require("express"); // Import Express
 const app = express(); // Create an Express application
 const PORT = 4000; // Set the port for the Express server
-const cron_logs = [];
+let cron_logs = [];
 console.log("code run");
 let job_in_progress = false;
 
@@ -343,27 +343,38 @@ app.get("/log", restrictAccess, async (req, res) => {
       password: process.env.DJANGO_DB_PASSWORD,
       port: process.env.DJANGO_DB_PORT,
     });
-    await client.connect();
-    const currentDateTime = new Date();
-    const twentyMinutesAgo = new Date(
-      currentDateTime.getTime() - 20 * 60 * 1000
-    );
-    const query = `SELECT * FROM "systemLogs_systemlogs" WHERE created_at >= $1`;
-    const logs = await client.query(query, [twentyMinutesAgo]);
-    AddToCronLogs(`fetched ${logs.rows.length} logs`);
-    cron_logs.push(logs.rows);
+    try {
+      await client.connect();
+      const currentDateTime = new Date();
+      const twentyMinutesAgo = new Date(
+        currentDateTime.getTime() - 20 * 60 * 1000
+      );
+      const query = `SELECT * FROM "systemLogs_systemlogs" WHERE created_at >= $1`;
+      const logs = await client.query(query, [twentyMinutesAgo]);
+      AddToCronLogs(`fetched ${logs.rows.length} logs`);
+      // cron_logs.push(logs.rows);
+      logs.rows.forEach((log) => cron_logs.push(log));
 
-    res.json({
-      message: "success",
-      system_logs: cron_logs,
-    });
+      res.json({
+        message: "success",
+        system_logs: cron_logs,
+      });
 
-    const deletequery = `DELETE FROM systemLogs_systemlogs WHERE created_at >= $1`;
-    await client.query(deletequery, [twentyMinutesAgo]);
-    cron_logs = [];
-    return;
+      const deletequery = `DELETE FROM "systemLogs_systemlogs" WHERE created_at >= $1`;
+      await client.query(deletequery, [twentyMinutesAgo]);
+      cron_logs = [];
+    } catch (e) {
+      await client.query("ROLLBACK");
+      res.json({
+        message: e,
+        system_logs: [],
+      });
+    } finally {
+      client.end();
+      return;
+    }
   } else {
-    res.json({
+    return res.json({
       message: "job in progress",
       system_logs: [],
     });
