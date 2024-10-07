@@ -322,12 +322,31 @@ cron.schedule("0 19 * * * ", async () => {
 });
 
 // API
-const ALLOWED_IP = process.env.ALLOWED_IP_NODE;
+const ALLOWED_IP = process.env.PROD_ALLOWED_IP_NODE;
+
+const normalizeIP = (ip) => {
+  // Convert IPv6 to IPv4 if applicable
+  if (ip.startsWith("::ffff:")) {
+    return ip.slice(7); // Remove the "::ffff:" prefix
+  } else if (ip.startsWith("::")) {
+    return ip.slice(2);
+  } else if (ip.startsWith(":")) {
+    return ip.slice(1);
+  }
+  return ip; // Return the IP as-is if not in IPv6 format
+};
 
 const restrictAccess = (req, res, next) => {
   const requestIP = req.ip || req.connection.remoteAddress;
+  const normalizedRequestIP = normalizeIP(requestIP);
+  const normalizedAllowedIP = normalizeIP(ALLOWED_IP);
   // Check if the request IP matches the allowed IP
-  if (requestIP === ALLOWED_IP) {
+  console.log(
+    normalizedRequestIP,
+    normalizedAllowedIP,
+    normalizedRequestIP === normalizedAllowedIP
+  );
+  if (normalizedRequestIP === normalizedAllowedIP) {
     return next(); // Allow access
   } else {
     return res.status(403).json({ message: "Access denied" }); // Deny access
