@@ -365,7 +365,7 @@ app.get("/log", restrictAccess, async (req, res) => {
       const twentyMinutesAgo = new Date(
         currentDateTime.getTime() - 20 * 60 * 1000
       );
-      const query = `SELECT * FROM "systemLogs_systemlogs" WHERE created_at >= $1`;
+      const query = `SELECT * FROM "systemLogs_systemlogs" WHERE created_at < $1`;
       const logs = await client.query(query, [twentyMinutesAgo]);
       AddToCronLogs(`fetched ${logs.rows.length} logs`);
       // cron_logs.push(logs.rows);
@@ -376,7 +376,7 @@ app.get("/log", restrictAccess, async (req, res) => {
         system_logs: cron_logs,
       });
 
-      const deletequery = `DELETE FROM "systemLogs_systemlogs" WHERE created_at >= $1`;
+      const deletequery = `DELETE FROM "systemLogs_systemlogs" WHERE created_at < $1`;
       await client.query(deletequery, [twentyMinutesAgo]);
       cron_logs = [];
       console.log("delete success");
