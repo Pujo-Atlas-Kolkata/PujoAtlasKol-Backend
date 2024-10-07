@@ -12,7 +12,8 @@
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
     "node-cron": "^3.0.3",
-    "pg": "^8.13.0"
+    "pg": "^8.13.0",
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "@types/node-cron": "^3.0.11",
