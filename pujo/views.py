@@ -18,7 +18,7 @@ from rest_framework import permissions
 import re
 from .helpers import find_nearest_transport
 import pandas as pd
-from datetime import datetime, timezone
+from datetime import datetime
 from django.utils import timezone
 
 logger = logging.getLogger("pujo")
@@ -85,7 +85,8 @@ class PujoViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"], url_path="trending")
     def trending(self, request, *args, **kwargs):
         try:
-            fallback_date = datetime(1970, 1, 1, tzinfo=timezone.utc)
+            fallback_date = timezone.make_aware(datetime(1970, 1, 1))
+
             trending_pujos = Pujo.objects.order_by("-search_score")[:10]
 
             same_score_pujos = {}
