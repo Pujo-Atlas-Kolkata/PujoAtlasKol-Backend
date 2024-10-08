@@ -13,6 +13,6 @@ trends = ServiceViewSet.as_view({'get':'show_trends'})
 
 urlpatterns = [
     path('health', health, name='health'),
-    path('logs', logs, name="logs"),
-    path('trends', trends, name="trends")
 ]
+    # path('trends', trends, name="trends")
+    # path('logs', logs, name="logs"),
