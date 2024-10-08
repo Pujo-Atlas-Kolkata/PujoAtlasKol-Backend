@@ -19,7 +19,7 @@ import re
 from django.utils import timezone
 from .helpers import find_nearest_transport
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger("pujo")
 
@@ -85,7 +85,7 @@ class PujoViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"], url_path="trending")
     def trending(self, request, *args, **kwargs):
         try:
-
+            fallback_date = datetime(1970, 1, 1, tzinfo=timezone.utc)
             trending_pujos = Pujo.objects.order_by("-search_score")[:10]
 
             same_score_pujos = {}
@@ -101,7 +101,7 @@ class PujoViewSet(viewsets.ModelViewSet):
                 if len(pujos) > 1:  # More than one pujo with the same score
                     most_recent_pujo = sorted(
                         pujos,
-                        key=lambda x: x.updated_at or datetime(1970, 1, 1),
+                        key=lambda x: x.updated_at or fallback_date,
                         reverse=True,
                     )[0]
                     # Sort by updated_at and get the most recent one
