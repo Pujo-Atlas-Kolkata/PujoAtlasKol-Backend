@@ -3,8 +3,8 @@ const cron = require("node-cron");
 require("dotenv").config({ path: "../.env" });
 const { v4: uuidv4 } = require("uuid");
 // const Minio = require("minio");
-const AWS = require("aws-sdk");
 const Papa = require("papaparse");
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 // const express = require("express"); // Import Express
 // const app = express(); // Create an Express application
 // const PORT = 4000; // Set the port for the Express server
@@ -245,9 +245,11 @@ async function normalize_scores() {
 }
 
 async function uploadLogsToAWS() {
-  const s3 = new AWS.S3({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  const s3 = new S3Client({
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
     region: process.env.AWS_REGION,
   });
 
@@ -262,6 +264,8 @@ async function uploadLogsToAWS() {
   try {
     await client.connect();
     console.log("connected to database");
+    await client.query("BEGIN");
+    console.log("started Transaction");
     const currentDateTime = new Date();
     const twentyMinutesAgo = new Date(
       currentDateTime.getTime() - 20 * 60 * 1000
@@ -270,6 +274,11 @@ async function uploadLogsToAWS() {
     const logs = await client.query(query, [twentyMinutesAgo]);
 
     cron_logs.forEach((log) => logs.rows.push(log));
+
+    if (logs?.rows?.length === 0) {
+      console.log("No records to upload.");
+      return; // Exit early if no records
+    }
 
     AddToCronLogs(`Fetched ${logs.rows.length} logs`);
 
@@ -285,9 +294,9 @@ async function uploadLogsToAWS() {
     };
 
     // Upload the file to S3
-    const uploadResult = await s3.upload(params).promise();
+    await s3.send(new PutObjectCommand(params));
 
-    console.log("File uploaded successfully:", uploadResult.Location);
+    console.log("File uploaded successfully");
 
     const deletequery = `DELETE FROM "systemLogs_systemlogs" WHERE created_at < $1`;
     await client.query(deletequery, [twentyMinutesAgo]);
@@ -302,9 +311,11 @@ async function uploadLogsToAWS() {
 }
 
 async function uploadTrendsToAWS() {
-  const s3 = new AWS.S3({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  const s3 = new S3Client({
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
     region: process.env.AWS_REGION,
   });
 
@@ -320,12 +331,21 @@ async function uploadTrendsToAWS() {
   try {
     await client.connect();
     console.log("connected to database");
+
+    await client.query("BEGIN");
+    console.log("Transaction started");
     const currentDateTime = new Date();
     const twentyMinutesAgo = new Date(
       currentDateTime.getTime() - 21 * 60 * 1000
     );
     const query = `SELECT * FROM "pujo_lastscoremodel" WHERE last_updated_at < $1`;
     const trends = await client.query(query, [twentyMinutesAgo]);
+
+    if (trends?.rows?.length === 0) {
+      console.log("No records to upload.");
+      return; // Exit early if no records
+    }
+
     console.log(`Fetched ${trends.rows.length} records`);
 
     const csv = Papa.unparse(trends.rows);
@@ -340,11 +360,11 @@ async function uploadTrendsToAWS() {
     };
 
     // Upload the file to S3
-    const uploadResult = await s3.upload(params).promise();
+    await s3.send(new PutObjectCommand(params));
 
-    console.log("File uploaded successfully:", uploadResult.Location);
+    console.log("File uploaded successfully");
 
-    const delete_query = `DELETE * FROM "pujo_lastscoremodel" WHERE last_updated_at < $1`;
+    const delete_query = `DELETE FROM "pujo_lastscoremodel" WHERE last_updated_at < $1`;
     await client.query(delete_query, [twentyMinutesAgo]);
 
     await client.query("COMMIT");
