@@ -19,7 +19,7 @@ import re
 from django.utils import timezone
 from .helpers import find_nearest_transport
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger("pujo")
 
