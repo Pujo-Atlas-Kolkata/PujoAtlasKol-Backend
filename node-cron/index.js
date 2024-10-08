@@ -91,8 +91,6 @@ async function update_scores() {
     const pujos = await client.query(pujoQuery);
     AddToCronLogs(`fetched ${pujos.rows.length} pujos - lastscoremodel`);
     let index = 0;
-    let updated_pujos = [];
-    let same_score_pujos = {};
     if (pujos.rows.length === 0) {
       AddToCronLogs("No pujos found for score update - lastscoremodel");
     } else {
@@ -109,53 +107,16 @@ async function update_scores() {
           pujo.name,
         ]);
         const newScore = getScore(pujo, index);
-        pujo.search_score = Math.max(newScore, 0);
-        updated_pujos.push(pujo);
+        search_score = Math.max(newScore, 0);
 
-        updated_pujos.forEach((pujo) => {
-          const score = pujo.search_score;
-
-          if (!same_score_pujos[score]) {
-            same_score_pujos[score] = []; // Initialize the array if it doesn't exist
-          }
-
-          same_score_pujos[score].push(pujo); // Add the pujo to the corresponding score array
-        });
-
-        for (const [score, pujos] of Object.entries(same_score_pujos)) {
-          if (pujos.length > 1) {
-            // More than one pujo with the same score
-            const mostRecentPujo = pujos.sort((a, b) => {
-              const updatedAtA = a.updated_at
-                ? new Date(a.updated_at)
-                : new Date(0); // Fallback to Jan 1, 1970
-              const updatedAtB = b.updated_at
-                ? new Date(b.updated_at)
-                : new Date(0); // Fallback to Jan 1, 1970
-              return updatedAtB - updatedAtA; // Sort in descending order
-            })[0]; // Get the most recent pujo
-
-            mostRecentPujo.search_score += 1;
-
-            if (!updated_pujos.includes(mostRecentPujo)) {
-              updated_pujos.push(mostRecentPujo);
-            }
-          }
-        }
-        index++;
-      }
-
-      for (const pujo of updated_pujos) {
         const updateQuery = `
             UPDATE pujo_pujo
             SET search_score = $1
             WHERE id = $2;
         `;
-        try {
-          await client.query(updateQuery, [pujo.search_score, pujo.id]);
-        } catch (error) {
-          console.error(`Failed to update pujo with id ${pujo.id}:`, error);
-        }
+        await client.query(updateQuery, [search_score, pujo.id]);
+
+        index++;
       }
     }
 
