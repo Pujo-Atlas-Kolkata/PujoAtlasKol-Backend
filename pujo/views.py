@@ -333,7 +333,7 @@ class PujoTrendingIncreaseViewSet(viewsets.ModelViewSet):
                 if term == "search":
                     for pujo_id, pujo in found_pujos.items():
                         if pujo.search_score > 0:
-                            pujo.search_score = max(pujo.search_score - 5, 0)
+                            pujo.search_score = max(pujo.search_score - 1, 0)
 
                         pujo.updated_at = timezone.now()
                         pujo.save()
