@@ -19,7 +19,6 @@ APP_START_TIME = datetime.now()
 
 
 class ServiceViewSet(viewsets.ModelViewSet):
-    throttle_classes = [OneMinuteThrottle]
 
     def get_permissions(self):
         if self.action in ["health_check"]:
@@ -27,6 +26,7 @@ class ServiceViewSet(viewsets.ModelViewSet):
             return [permissions.AllowAny()]
         return super().get_permissions()
 
+    @action(detail=False, methods=['get'], throttle_classes=[OneMinuteThrottle])
     def health_check(request, *args, **kwargs):
         data = {}
         status_code = 200
