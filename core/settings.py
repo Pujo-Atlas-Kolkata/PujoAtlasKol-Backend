@@ -22,47 +22,51 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = '/static/'  # Add a leading slash and trailing slash
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_URL = "/static/"  # Add a leading slash and trailing slash
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 # Application definition
 
 INSTALLED_APPS = [
-    'jazzmin',
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'drf_spectacular',
-    'rest_framework',
-    'rest_framework_simplejwt.token_blacklist',
+    "jazzmin",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "drf_spectacular",
+    "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
-    'import_export',
-    'systemLogs',
-    'pujo',
-    'user',
-    'reviews',
-    'metro',
-    'service'
+    "import_export",
+    "systemLogs",
+    "pujo",
+    "user",
+    "reviews",
+    "metro",
+    "service",
 ]
 
-AUTH_USER_MODEL = 'user.User'
+AUTH_USER_MODEL = "user.User"
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-    'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
+    "DEFAULT_THROTTLE_CLASSES": [],
+    "DEFAULT_THROTTLE_RATES": {
+        "one_minute": "1/minute",
+    },
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "EXCEPTION_HANDLER": "core.exceptions.custom_exception_handler",
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=6),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=6),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
     "USER_ID_FIELD": "id",
@@ -75,86 +79,80 @@ SIMPLE_JWT = {
 
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "core.MiddleWares.middleware.LoggingMiddleware",
     "core.MiddleWares.RestrictIPMiddleware.RestrictIPMiddleware",
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'core.urls'
+ROOT_URLCONF = "core.urls"
 
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': "Pujo Atlas Backend",
-    'DESCRIPTION': 'API documentation',
-    'VERSION': '1.1.0',
-    'SERVERS': [
-        {
-            'url': 'https://api-atlas.ourkolkata.in/',
-            'description': 'Production Server'
-        },
-        {
-            'url': 'http://localhost:3000/',
-            'description': 'Development Server'
-        },
+    "TITLE": "Pujo Atlas Backend",
+    "DESCRIPTION": "API documentation",
+    "VERSION": "1.1.0",
+    "SERVERS": [
+        {"url": "https://api-atlas.ourkolkata.in/", "description": "Production Server"},
+        {"url": "http://localhost:3000/", "description": "Development Server"},
     ],
 }
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'core.wsgi.application'
+WSGI_APPLICATION = "core.wsgi.application"
 
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',  # Default
+    "django.contrib.auth.backends.ModelBackend",  # Default
 ]
 
 
-# DJANGO IMPORT EXPORT 
+# DJANGO IMPORT EXPORT
 IMPORT_EXPORT_USE_TRANSACTIONS = True
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DJANGO_DB_NAME'),
-        'USER': config('DJANGO_DB_USER'),
-        'PASSWORD': config('DJANGO_DB_PASSWORD'),
-        'HOST': config('DJANGO_DB_HOST'),
-        'PORT': config('DJANGO_DB_PORT'),
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": config("DJANGO_DB_NAME"),
+        "USER": config("DJANGO_DB_USER"),
+        "PASSWORD": config("DJANGO_DB_PASSWORD"),
+        "HOST": config("DJANGO_DB_HOST"),
+        "PORT": config("DJANGO_DB_PORT"),
     }
 }
 
-MINIO_URL = config('MINIO_URL')
-MINIO_ACCESS_KEY = config('MINIO_ACCESS_KEY')
-MINIO_SECRET_KEY = config('MINIO_SECRET_KEY')
-MINIO_BUCKET_NAME = config('MINIO_BUCKET_NAME')
-
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = get_random_secret_key()
-DEBUG = config('DEBUG', cast=bool)
-ALLOWED_HOSTS = ["api-atlas.ourkolkata.in",'localhost', '127.0.0.1',"ec2-3-111-147-124.ap-south-1.compute.amazonaws.com"]
+DEBUG = config("DEBUG", cast=bool)
+ALLOWED_HOSTS = [
+    "api-atlas.ourkolkata.in",
+    "localhost",
+    "127.0.0.1",
+    "ec2-3-111-147-124.ap-south-1.compute.amazonaws.com",
+]
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
@@ -174,73 +172,73 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
 # logger
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
-            'style': '{',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
         },
-        'simple': {
-            'format': '{levelname} {message}',
-            'style': '{',
-        },
-    },
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
-        },
-        'file': {
-            'class': 'logging.FileHandler',
-            'filename': 'django_debug.log',
-            'formatter': 'verbose',
-        },
-         'database': {
-            'class': 'systemLogs.handlers.DatabaseLogHandler',
-            'formatter': 'verbose',
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
         },
     },
-    'loggers': {
-        'django': {
-            'handlers': ['console', 'file' , 'database'],
-            'level': 'INFO',
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
         },
-        'core.task': {
-            'handlers': ['console', 'file', 'database'],
-            'level': 'INFO',
-            'propagate': False,
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": "django_debug.log",
+            "formatter": "verbose",
         },
-        'pujo': {
-            'handlers': ['console', 'file' , 'database'],
-            'level': 'INFO',
-            'propagate': False,
+        "database": {
+            "class": "systemLogs.handlers.DatabaseLogHandler",
+            "formatter": "verbose",
         },
-        'user': {
-            'handlers': ['console', 'file' , 'database'],
-            'level': 'INFO',
-            'propagate': False,
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console", "file", "database"],
+            "level": "INFO",
         },
-        'reviews': {
-            'handlers': ['console', 'file' , 'database'],
-            'level': 'INFO',
-            'propagate': False,
+        "core.task": {
+            "handlers": ["console", "file", "database"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "pujo": {
+            "handlers": ["console", "file", "database"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "user": {
+            "handlers": ["console", "file", "database"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "reviews": {
+            "handlers": ["console", "file", "database"],
+            "level": "INFO",
+            "propagate": False,
         },
     },
 }
@@ -248,9 +246,9 @@ LOGGING = {
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -264,4 +262,4 @@ CSRF_COOKIE_SECURE = True
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

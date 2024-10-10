@@ -64,34 +64,44 @@ Once Task is installed, you can proceed with the setup.
 
    a. Unix based system
 
-      ```sh
-         nohup python3 manage.py runserver > django-server.log 2>&1 &
-      ```
+   ```sh
+      nohup python3 manage.py runserver > django-server.log 2>&1 &
+   ```
+
    b. Windows based system
-      ```sh
-         task run_server
-      ```
+
+   ```sh
+      task run_server
+   ```
+
 4. Run the cron job detached:
 
-    a. Unix based system
+   a. Unix based system
 
-      ```sh
-         nohup node node-cron/index.js &
-      ```
+   ```sh
+      nohup node node-cron/index.js &
+   ```
+
    b. Windows based system
-      ```sh
-         task run_scheduler
-      ```
+
+   ```sh
+      task run_scheduler
+   ```
+
 ### Validate Application Status
 
-   a. Django Server 
-   ```sh
-      localhost:3000/swagger
-   ```
-   b. node cron job
-   ```sh
-      localhost:4000/health
-   ```
+a. Django Server
+
+```sh
+   localhost:3000/swagger
+```
+
+b. node cron job
+
+```sh
+   localhost:4000/health
+```
+
 ### Manual Setup (Optional)
 
 If you want to perform each step manually, follow these commands:
@@ -181,10 +191,22 @@ task stop_server
 - **Virtual Environment Issues**: If you encounter issues activating the virtual environment, make sure you are using the correct command for your OS.
 - **Port Conflicts**: If any port conflicts occur, make sure no other services are running on the required ports.
 
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.
-
 ## Contributing
 
-Feel free to submit issues and pull requests. Contributions are welcome!
+We 💖 contributors! Feel free to contribute to this project but **please read the [Contributing Guidelines](CONTRIBUTING.md) before opening an issue or PR** so you understand the branching strategy. We also welcome you to join our [Discord](https://discord.com/invite/xxSXWYf6d4) community for either support or contributing guidance.
+
+![Alt](https://repobeats.axiom.co/api/embed/e21736ab847e9d6aaf62bbd15061f5793f087dff.svg "Repobeats analytics image")
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Sponsors
+
+A special thank you to **Netlify**, **Cloudflare**, and **Sentry** for sponsoring **Pujo Atlas**!
+
+<div>
+   <a href="https://www.netlify.com" target="_blank" rel="noopener noreferrer"><img src="https://www.netlify.com/v3/img/components/netlify-color-accent.svg" alt="Deploys by Netlify" /></a>
+   <a href="https://www.cloudflare.com" target="_blank" rel="noopener noreferrer"><img src="https://cf-assets.www.cloudflare.com/slt3lc6tev37/CHOl0sUhrumCxOXfRotGt/081f81d52274080b2d026fdf163e3009/cloudflare-icon-color_3x.png" alt="Cloudflare Badge" height="50px" width="100px" /></a>
+   <a href="https://www.sentry.io" target="_blank" rel="noopener noreferrer"><img src="https://avatars.githubusercontent.com/u/1396951?v=4" alt="Cloudflare Badge" height="50px" width="50px" /></a>
+</div>
