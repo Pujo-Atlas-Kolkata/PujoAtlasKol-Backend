@@ -41,11 +41,12 @@ class ServiceViewSet(viewsets.ModelViewSet):
         # Extract specific memory details
         total_memory = kb_to_mb(memory_info.get("MemTotal"))
         free_memory = kb_to_mb(memory_info.get("MemFree"))
-        available_memory = kb_to_mb(memory_info.get("MemAvailable"))
+        buffers = kb_to_mb(memory_info.get("Buffers", 0))
+        cached = kb_to_mb(memory_info.get("Cached", 0))
 
-        used_memory = total_memory - available_memory
+        used_memory = total_memory - (free_memory + buffers + cached)
 
-        used_memory_percentage = (used_memory / total_memory) * 100
+        used_memory_percentage = (used_memory / total_memory) * 100 if total_memory > 0 else 0
 
         data["free_memory"] = f"{free_memory:.2f} MB"
         data["total_memory"] = f"{total_memory:.2f} MB"

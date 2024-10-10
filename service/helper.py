@@ -46,7 +46,7 @@ def get_disk_usage(path="/"):
     total_space_mb = bytes_to_mb(total_space)
     free_space_mb = bytes_to_mb(free_space)
     used_space_mb = bytes_to_mb(used_space)
-    used_percentage = (used_space / total_space) * 100
+    used_percentage = (used_space / total_space) * 100 if total_space > 0 else 0
 
     return {
         "total_space_mb": total_space_mb,
