@@ -19,7 +19,7 @@ from django.http import HttpResponse
 from io import StringIO
 from datetime import datetime
 from collections import defaultdict
-from .helper import get_memory_info
+from .helper import get_memory_info, kb_to_mb, get_disk_usage, get_cpu_usage
 
 APP_START_TIME = datetime.now()
 
@@ -38,18 +38,36 @@ class ServiceViewSet(viewsets.ModelViewSet):
 
         memory_info = get_memory_info()
 
-        # Extract specific memory details (if available)
-        total_memory = memory_info.get("MemTotal")
-        free_memory = memory_info.get("MemFree")
-        available_memory = memory_info.get("MemAvailable")
-        cached_memory = memory_info.get("Cached")
-        buffered_memory = memory_info.get("Buffers")
+        # Extract specific memory details
+        total_memory = kb_to_mb(memory_info.get("MemTotal"))
+        free_memory = kb_to_mb(memory_info.get("MemFree"))
+        available_memory = kb_to_mb(memory_info.get("MemAvailable"))
 
-        print(f"Total Memory: {total_memory}")
-        print(f"Free Memory: {free_memory}")
-        print(f"Available Memory: {available_memory}")
-        print(f"Cached Memory: {cached_memory}")
-        print(f"Buffered Memory: {buffered_memory}")
+        used_memory = total_memory - available_memory
+
+        used_memory_percentage = (used_memory / total_memory) * 100
+
+        data["free_memory"] = f"{free_memory:.2f} MB"
+        data["total_memory"] = f"{total_memory:.2f} MB"
+        data["memory_usage"] = f"{used_memory_percentage:.2f} %"
+
+        disk_usage = get_disk_usage("/")
+
+        total_disk_space_gb = disk_usage["total_space_mb"] / 1024
+        disk_usage_percentage = (
+            disk_usage["used_space_mb"] / disk_usage["total_space_mb"]
+        ) / 100
+
+        data["total_space_mb"] = f"{disk_usage['total_space_mb']:.2f} MB"
+        data["used_space_mb"] = f"{disk_usage['used_space_mb']:.2f} MB"
+        data["free_space_mb"] = f"{disk_usage['free_space_mb']:.2f} MB"
+        data["disk_usage_percentage"] = (
+            f"{disk_usage_percentage:.2f} % of {total_disk_space_gb:.2f}"
+        )
+
+        cpu_usage = get_cpu_usage()
+
+        data["cpu_usuage"] = f"{cpu_usage:.2f}%"
 
         # Check app status
         data["status"] = "OK"
