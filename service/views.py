@@ -54,15 +54,12 @@ class ServiceViewSet(viewsets.ModelViewSet):
         disk_usage = get_disk_usage("/")
 
         total_disk_space_gb = disk_usage["total_space_mb"] / 1024
-        disk_usage_percentage = (
-            disk_usage["used_space_mb"] / disk_usage["total_space_mb"]
-        ) / 100
 
         data["total_space_mb"] = f"{disk_usage['total_space_mb']:.2f} MB"
         data["used_space_mb"] = f"{disk_usage['used_space_mb']:.2f} MB"
         data["free_space_mb"] = f"{disk_usage['free_space_mb']:.2f} MB"
         data["disk_usage_percentage"] = (
-            f"{disk_usage_percentage:.2f} % of {total_disk_space_gb:.2f}"
+            f"{disk_usage["usuage_disk_space"]:.2f} % of {total_disk_space_gb:.2f}GB"
         )
 
         cpu_usage = get_cpu_usage()

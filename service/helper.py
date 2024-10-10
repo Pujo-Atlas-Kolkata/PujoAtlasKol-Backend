@@ -46,11 +46,13 @@ def get_disk_usage(path="/"):
     total_space_mb = bytes_to_mb(total_space)
     free_space_mb = bytes_to_mb(free_space)
     used_space_mb = bytes_to_mb(used_space)
+    used_percentage = (used_space / total_space) * 100
 
     return {
         "total_space_mb": total_space_mb,
         "used_space_mb": used_space_mb,
         "free_space_mb": free_space_mb,
+        "usuage_disk_space": used_percentage,
     }
 
 
@@ -60,25 +62,25 @@ def get_cpu_usage():
         first_line = f.readline()
 
     # Extract CPU values from the first line
-    cpu_times = list(
-        map(int, first_line.split()[1:])
-    )  # Skip the first element (CPU label)
-    total_time1 = sum(cpu_times)  # Total time spent in all states
+    # Skip the first element (CPU label)
+    cpu_times1 = list(map(int, first_line.split()[1:]))
+
+    total_time1 = sum(cpu_times1)  # Total time spent in all states
 
     # Wait for a short period (1 second)
-    time.sleep(1)
+    time.sleep(10)
 
     # Read the CPU stats again
     with open("/proc/stat", "r") as f:
         second_line = f.readline()
 
     # Extract CPU values from the second line
-    cpu_times = list(map(int, second_line.split()[1:]))
-    total_time2 = sum(cpu_times)
+    cpu_times2 = list(map(int, second_line.split()[1:]))
+    total_time2 = sum(cpu_times2)
 
     # Calculate the differences
     total_diff = total_time2 - total_time1
-    idle_diff = cpu_times[3] - cpu_times[3]  # Idle time is usually the fourth value
+    idle_diff = cpu_times2[3] - cpu_times1[3]  # Idle time is usually the fourth value
 
     # Calculate CPU usage percentage
     cpu_usage = 100 * (1 - (idle_diff / total_diff))
