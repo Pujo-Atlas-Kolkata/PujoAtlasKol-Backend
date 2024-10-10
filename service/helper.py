@@ -3,6 +3,7 @@ import time
 
 
 def kb_to_mb(kb_value):
+    kb_value_cleaned = kb_value.strip().replace(" kB", "")
     return float(kb_value) / 1024
 
 
