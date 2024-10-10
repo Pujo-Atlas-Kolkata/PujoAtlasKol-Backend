@@ -88,7 +88,8 @@ class ServiceViewSet(viewsets.ModelViewSet):
             status_code = 500
 
         # Server time
-        data["server_time"] = current_time.isoformat()
+        data["server_time_iso"] = current_time.isoformat()
+        data["server_time"] = current_time.strftime("%b %d %Y, %A, %I:%M %p")
 
         response_data = {"result": data, "status": ResponseStatus.SUCCESS.value}
 
