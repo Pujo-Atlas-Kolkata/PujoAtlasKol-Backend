@@ -6,6 +6,4 @@ class OneMinuteThrottle(SimpleRateThrottle):
 
     def get_cache_key(self, request, view):
         # Use the user's IP address as the cache key
-        if request.user.is_authenticated:
-            return f"{request.user.username}:{self.scope}"
-        return request.META["REMOTE_ADDR"]
+        return request.META.get("REMOTE_ADDR")
