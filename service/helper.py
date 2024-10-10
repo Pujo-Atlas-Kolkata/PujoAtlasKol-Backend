@@ -1,5 +1,6 @@
 import os
 import time
+from datetime import timedelta
 
 
 def kb_to_mb(kb_value):
@@ -86,3 +87,10 @@ def get_cpu_usage():
     cpu_usage = 100 * (1 - (idle_diff / total_diff))
 
     return cpu_usage
+
+
+def convert_to_ist(time):
+    # Convert UTC to IST
+    # IST is UTC + 5 hours 30 minutes
+    ist_time = time + timedelta(hours=5, minutes=30)
+    return ist_time

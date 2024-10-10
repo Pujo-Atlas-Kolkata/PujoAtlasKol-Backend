@@ -12,7 +12,7 @@ from django.db import connection
 from rest_framework.throttling import ScopedRateThrottle
 from datetime import datetime
 from collections import defaultdict
-from .helper import get_memory_info, kb_to_mb, get_disk_usage, get_cpu_usage
+from .helper import get_memory_info, kb_to_mb, get_disk_usage, get_cpu_usage, convert_to_ist
 from core.throttle import OneMinuteThrottle
 
 APP_START_TIME = datetime.now()
@@ -177,7 +177,7 @@ class ServiceViewSet(viewsets.ModelViewSet):
 
         for score in data:
             trends[score.pujo_id]["values"].append(score.value)
-            trends[score.pujo_id]["ts"].append(score.last_updated_at)
+            trends[score.pujo_id]["ts"].append(convert_to_ist(score.last_updated_at))
 
         # Convert defaultdict to a list of dictionaries
         result = [
