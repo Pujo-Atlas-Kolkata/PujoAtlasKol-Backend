@@ -3,15 +3,15 @@ import time
 
 
 def kb_to_mb(kb_value):
-    return kb_value / 1024
+    return float(kb_value) / 1024
 
 
 def bytes_to_mb(value):
-    return value / (1024**2)
+    return float(value) / (1024**2)
 
 
 def mb_to_gb(mb_value):
-    return mb_value / 1024
+    return float(mb_value) / 1024
 
 
 def get_memory_info():

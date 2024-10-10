@@ -19,7 +19,7 @@ from django.http import HttpResponse
 from io import StringIO
 from datetime import datetime
 from collections import defaultdict
-from .helper import get_memory_info, kb_to_mb, get_disk_usage, get_cpu_usage
+from helper import get_memory_info, kb_to_mb, get_disk_usage, get_cpu_usage
 
 APP_START_TIME = datetime.now()
 
