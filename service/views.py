@@ -5,26 +5,21 @@ from core.ResponseStatus import ResponseStatus
 from pujo.models import LastScoreModel
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework import permissions
-import pandas as pd
 import django
 import platform
-import os
 from datetime import datetime, timedelta
 from django.db import connection
-from decouple import config
-import http.client
-import json
-import csv
-from django.http import HttpResponse
-from io import StringIO
+from rest_framework.throttling import ScopedRateThrottle
 from datetime import datetime
 from collections import defaultdict
 from .helper import get_memory_info, kb_to_mb, get_disk_usage, get_cpu_usage
+from core.throttle import OneMinuteThrottle
 
 APP_START_TIME = datetime.now()
 
 
 class ServiceViewSet(viewsets.ModelViewSet):
+    throttle_classes = [OneMinuteThrottle]
 
     def get_permissions(self):
         if self.action in ["health_check"]:
