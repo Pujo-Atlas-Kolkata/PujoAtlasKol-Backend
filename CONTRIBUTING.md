@@ -1,6 +1,6 @@
 # Contribution Guidelines
 
-When contributing to `PujoAtlasKol-Web`, whether on GitHub or in other community spaces:
+When contributing to `PujoAtlasKol-Backend`, whether on GitHub or in other community spaces:
 
 - Be respectful, civil, and open-minded.
 - Before opening a new pull request, try searching through the [issue tracker](https://github.com/Pujo-Atlas-Kolkata/PujoAtlasKol-Backend/issues) for known issues or fixes.
