@@ -4,8 +4,18 @@ export class Metro {
   lon: number;
   name: string;
   station_code?: string;
-  platform_type: string;
   line: string[];
-  created_at: Date;
-  updated_at: Date;
+  created_at: number;
+  updated_at: number;
+}
+
+export class MetroDto {
+  id: number;
+  lat: number;
+  lon: number;
+  name: string;
+  station_code?: string;
+  line: string[];
+  created_at: number;
+  updated_at: number;
 }
