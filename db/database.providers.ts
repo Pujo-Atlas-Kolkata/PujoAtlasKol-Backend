@@ -10,7 +10,7 @@ export const databaseProviders = [
       const dataSource = new DataSource({
         type: 'postgres',
         host: 'localhost',
-        port: 5432,
+        port: 5433,
         username: process.env.DJANGO_DB_USE,
         password: process.env.DJANGO_DB_PASSWORD,
         database: process.env.DJANGO_DB_NAME,
