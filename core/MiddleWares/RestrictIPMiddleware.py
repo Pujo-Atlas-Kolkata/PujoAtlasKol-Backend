@@ -52,11 +52,11 @@ class RestrictIPMiddleware:
             ip = request.META.get("REMOTE_ADDR")
 
         # Check for /swagger/ endpoint (allowed only for specific IPs)
-        if request.path == "/swagger/":
-            time = datetime.now()
-            print(f"{time} requester ip: {ip}")
-            if ip not in ips_list:
-                return HttpResponseForbidden("Access Denied")
+        # if request.path == "/swagger/":
+        #     time = datetime.now()
+        #     print(f"{time} requester ip: {ip}")
+        #     if ip not in ips_list:
+        #         return HttpResponseForbidden("Access Denied")
 
         # if request.path == "/service/logs":
         #     time = datetime.now()
