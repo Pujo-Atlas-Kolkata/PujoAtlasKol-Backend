@@ -1,29 +1,35 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
+import { Repository } from 'typeorm';
 import { Metro } from './metro.entity';
 import { MetroDto } from './metro.entity';
 
 @Injectable()
 export class MetroService {
-  private metros: Metro[] = [
-    {
-      id: 1,
-      lat: 40.7128,
-      lon: -74.006,
-      name: 'Kavi Subhash',
-      station_code: 'KKSO',
-      line: ['BLUE', 'ORANGE'],
-      created_at: Date.now(),
-      updated_at: Date.now(),
-    },
-  ];
+  constructor(
+    @Inject('METRO_REPOSITORY')
+    private metroRepository: Repository<Metro>
+  ) {}
 
-  findAll(): MetroDto[] {
-    return this.metros.map((metro) => this.toDto(metro));
+  async findAll(): Promise<MetroDto[]> {
+    const metros = await this.metroRepository.find();
+    return metros.map((metro) => this.toDto(metro));
   }
 
-  findOne(id: number): MetroDto | undefined {
-    const metro = this.metros.find((metro) => metro.id === id);
+  async findOne(id: number): Promise<MetroDto | undefined> {
+    const metro = await this.metroRepository.findOne({ where: { id } });
     return metro ? this.toDto(metro) : undefined;
+  }
+
+  async create(
+    metroDto: Omit<MetroDto, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<MetroDto> {
+    const metro = this.metroRepository.create({
+      ...metroDto,
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
+    await this.metroRepository.save(metro);
+    return this.toDto(metro);
   }
 
   private toDto(metro: Metro): MetroDto {
@@ -34,8 +40,8 @@ export class MetroService {
       name: metro.name,
       station_code: metro.station_code,
       line: metro.line,
-      created_at: metro.created_at,
-      updated_at: metro.updated_at,
+      created_at: metro.created_at.getTime(),
+      updated_at: metro.updated_at.getTime(),
     };
   }
 }

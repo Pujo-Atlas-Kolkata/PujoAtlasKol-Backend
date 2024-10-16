@@ -1,4 +1,4 @@
-import { Controller, Get, NotFoundException, Param } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body } from '@nestjs/common';
 import { MetroService } from './metro.service';
 import { MetroDto } from './metro.entity';
 import { ApiResponse } from './metro.response';
@@ -9,17 +9,27 @@ export class MetroController {
   constructor(private readonly metroService: MetroService) {}
 
   @Get()
-  findAll(): ApiResponse<MetroDto[]> {
-    const metros = this.metroService.findAll();
+  async findAll(): Promise<ApiResponse<MetroDto[]>> {
+    const metros = await this.metroService.findAll();
     return new ApiResponse(metros, Status.SUCCESS);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): ApiResponse<MetroDto> {
-    const metro = this.metroService.findOne(+id);
+  async findOne(
+    @Param('id') id: string
+  ): Promise<ApiResponse<MetroDto | string>> {
+    const metro = await this.metroService.findOne(+id);
     if (!metro) {
-      throw new NotFoundException(`Metro with ID ${id} not found`);
+      return new ApiResponse(`Metro with ID ${id} not found`, Status.FAILED);
     }
     return new ApiResponse(metro, Status.SUCCESS);
+  }
+
+  @Post()
+  async create(
+    @Body() metroDto: Omit<MetroDto, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<ApiResponse<MetroDto>> {
+    const createdMetro = await this.metroService.create(metroDto);
+    return new ApiResponse(createdMetro, Status.SUCCESS);
   }
 }
