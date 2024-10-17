@@ -15,8 +15,7 @@ export const databaseProviders = [
         password: process.env.DJANGO_DB_PASSWORD,
         database: process.env.DJANGO_DB_NAME,
         entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-        // TODO fix: Setting synchronize: true shouldn't be used in production - otherwise you can lose production data.
-        synchronize: true,
+        synchronize: process.env.DJANGO_DB_SYNC_MODE !== 'production',
       });
 
       return dataSource.initialize();
