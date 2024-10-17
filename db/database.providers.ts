@@ -9,9 +9,9 @@ export const databaseProviders = [
     useFactory: async () => {
       const dataSource = new DataSource({
         type: 'postgres',
-        host: 'localhost',
-        port: 5433,
-        username: process.env.DJANGO_DB_USE,
+        host: process.env.DJANGO_DB_HOST,
+        port: parseInt(process.env.DJANGO_DB_PORT, 10),
+        username: process.env.DJANGO_DB_USER,
         password: process.env.DJANGO_DB_PASSWORD,
         database: process.env.DJANGO_DB_NAME,
         entities: [__dirname + '/../**/*.entity{.ts,.js}'],
