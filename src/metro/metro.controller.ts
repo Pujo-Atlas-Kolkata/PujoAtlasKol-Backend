@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Body } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, Delete } from '@nestjs/common';
 import { MetroService } from './metro.service';
 import { MetroDto } from './metro.entity';
 import { ApiResponse } from './metro.response';
@@ -8,28 +8,45 @@ import { Status } from './enum/status.enum';
 export class MetroController {
   constructor(private readonly metroService: MetroService) {}
 
-  @Get()
+  @Get('/list')
   async findAll(): Promise<ApiResponse<MetroDto[]>> {
     const metros = await this.metroService.findAll();
-    return new ApiResponse(metros, Status.SUCCESS);
+    const result = metros.map((metro) => {
+      return {
+        ...metro,
+      };
+    });
+  
+    return new ApiResponse(result, Status.SUCCESS);
   }
 
   @Get(':id')
   async findOne(
     @Param('id') id: string
   ): Promise<ApiResponse<MetroDto | string>> {
-    const metro = await this.metroService.findOne(+id);
+    const metro = await this.metroService.findOne(id);
     if (!metro) {
       return new ApiResponse(`Metro with ID ${id} not found`, Status.FAILED);
     }
     return new ApiResponse(metro, Status.SUCCESS);
   }
 
-  @Post()
+  @Post('/add')
   async create(
     @Body() metroDto: Omit<MetroDto, 'id' | 'created_at' | 'updated_at'>
   ): Promise<ApiResponse<MetroDto>> {
     const createdMetro = await this.metroService.create(metroDto);
     return new ApiResponse(createdMetro, Status.SUCCESS);
+  }
+
+  @Delete(':id')
+  async delete(
+    @Param('id') id: string
+  ): Promise<ApiResponse<MetroDto | string>> {
+    const deletedMetro = await this.metroService.deleteMetro(id);
+    if (deletedMetro === undefined) {
+      return new ApiResponse(`Metro with ID ${id} not found`, Status.FAILED);
+    }
+
   }
 }

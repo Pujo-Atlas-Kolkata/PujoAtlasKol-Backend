@@ -2,8 +2,8 @@ import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class Metro {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column('float')
   lat: number;
@@ -28,7 +28,7 @@ export class Metro {
 }
 
 export class MetroDto {
-  id: number;
+  id: string;  // Change to string type
   lat: number;
   lon: number;
   name: string;

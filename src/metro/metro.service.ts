@@ -15,7 +15,7 @@ export class MetroService {
     return metros.map((metro) => this.toDto(metro));
   }
 
-  async findOne(id: number): Promise<MetroDto | undefined> {
+  async findOne(id: string): Promise<MetroDto | undefined> {
     const metro = await this.metroRepository.findOne({ where: { id } });
     return metro ? this.toDto(metro) : undefined;
   }
@@ -30,6 +30,14 @@ export class MetroService {
     });
     await this.metroRepository.save(metro);
     return this.toDto(metro);
+  }
+
+  async deleteMetro(id: string): Promise<void |undefined> {
+    const result = await this.metroRepository.delete(id);
+    if (result.affected === 0) {
+    return undefined
+    }
+    return 
   }
 
   private toDto(metro: Metro): MetroDto {
