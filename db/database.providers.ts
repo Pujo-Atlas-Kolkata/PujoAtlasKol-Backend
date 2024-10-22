@@ -15,7 +15,9 @@ export const databaseProviders = [
         password: process.env.DJANGO_DB_PASSWORD,
         database: process.env.DJANGO_DB_NAME,
         entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-        synchronize: process.env.DJANGO_DB_SYNC_MODE !== 'production',
+        ssl: process.env.SSL_MODE === 'true',
+        synchronize: process.env.DJANGO_DB_SYNC_MODE === 'dev',
+        
       });
 
       return dataSource.initialize();
