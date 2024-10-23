@@ -16,6 +16,16 @@ In order to not waste your time implementing a change that has already been decl
 
 Please follow the [Contributing Guidelines](README.md) to setup the project.
 
+### Create a branch
+Create a new branch from the corresponding feature branch that will be mentioned in the issue as a tag, in the below format. This will get the feature branch tagged to the issue itself.
+
+```bash
+git checkout -b <commit-type>/[<issue-number>]/{<change-title>}
+example - "feat/12/add-event-api"
+```
+
+
+
 ### Implement your changes
 
 When making commits, make sure to follow the [conventional commit](https://www.conventionalcommits.org/en/v1.0.0/) guidelines, i.e. prepending the message with `feat:`, `fix:`, `chore:`, `docs:`. You can use `git status` to double check which files have not yet been staged for commit:

@@ -1,23 +1,38 @@
 
 # PujoAtlasKol-Backend
 
+<img src="public/file-type-node.svg" height="50px" width="50px" alt="Node Icon"/>
+<img src="public/file-type-typescript-official.svg" height="50px" width="50px" alt="TS Icon"/>
+<img src="https://nestjs.com/img/logo-small.svg" width="50px" height="50px" alt="Nest Logo" />
+          
+Welcome to Pujo Atlas - your ultimate guide for Pandal Hopping during Durga Puja in Kolkata! This open-source project aims to provide a comprehensive and user-friendly webapp that lists all the Durga Pujas happening around Kolkata and offers a host of features to make your pandal hopping experience seamless and enjoyable.
+
 ## Prerequisites
 - **Node.js** version 20 or higher is required.
 
 ## Setup Instructions
 
-1. **Clone the Git Repository**:
+_Some commands will assume you have the Github CLI installed, if you haven't, consider [installing it](https://github.com/cli/cli#installation), but you can always use the Web UI if you prefer that instead._
+
+1. **Fork the repository**
+   Do make sure that the branch node-implementation comes with your [fork](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo)
+
+```bash
+gh repo fork Pujo-Atlas-Kolkata/PujoAtlasKol-Backend
+```
+
+2. **Clone the Git Repository**:
    ```bash
    git clone https://github.com/Pujo-Atlas-Kolkata/PujoAtlasKol-Backend.git
    cd PujoAtlasKol-Backend
    ```
 
-2. **Checkout to the `node-implementation` branch**:
+3. **Checkout to the `node-implementation` branch**:
    ```bash
    git checkout node-implementation
    ```
 
-3. **Setup `.env.development` File**:
+4. **Setup `.env.development` File**:
    Create a `.env.development` file in the root of your project and add the following environment variables:
 
    ```env
@@ -30,7 +45,7 @@
    SSL_MODE=true
    ```
 
-4. **Run Setup Script**:
+5. **Run Setup Script**:
    Depending on your operating system, run the appropriate setup script to install dependencies and start the development server.
 
    ### For Unix/Linux/macOS Users:
