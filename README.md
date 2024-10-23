@@ -1,212 +1,71 @@
-# Project Setup and Running Guide
 
-This guide will walk you through the steps required to set up and run the project using Taskfile. Make sure you have all the prerequisites installed before proceeding.
+# PujoAtlasKol-Backend
 
 ## Prerequisites
+- **Node.js** version 20 or higher is required.
 
-Before you start, ensure that the following software is installed on your system:
+## Setup Instructions
 
-- [Docker](https://docs.docker.com/get-docker/)
-- [Docker Compose](https://docs.docker.com/compose/install/)
-- [Python](https://www.python.org/downloads/)
-- [Node.js and npm](https://nodejs.org/)
-
-You can check if these tools are installed by running the following commands:
-
-```sh
-docker --version
-docker-compose --version
-python --version
-node --version
-npm --version
-```
-
-## Setup
-
-This project uses a `Tasksfile.yml` to automate the setup process. You need to install Task (task runner for Go) before proceeding:
-
-- Installation instructions for Task can be found [here](https://taskfile.dev/installation/).
-
-For those who have already `npm` installed run the below command for quick setup
-
-```sh
-   npm install -g @go-task/cli
-```
-
-Once Task is installed, you can proceed with the setup.
-
-### Steps to Set Up
-
-1. Clone the repository:
-
-   ```sh
-   git clone https://github.com/Andrew99xx/PujoAtlasKol-Backend.git
+1. **Clone the Git Repository**:
+   ```bash
+   git clone https://github.com/Pujo-Atlas-Kolkata/PujoAtlasKol-Backend.git
    cd PujoAtlasKol-Backend
    ```
 
-2. Run the setup task:
-
-   ```sh
-   task setup
+2. **Checkout to the `node-implementation` branch**:
+   ```bash
+   git checkout node-implementation
    ```
 
-   This command will:
+3. **Setup `.env.development` File**:
+   Create a `.env.development` file in the root of your project and add the following environment variables:
 
-   - Check that all prerequisites are installed.
-   - Ensure Docker is running.
-   - Start the required services using Docker Compose.
-   - Create a Python virtual environment.
-   - Activate the virtual environment and install the necessary Python dependencies.
-   - Run database migrations.
-   - Set up the `node-cron` service.
-
-3. Run the Application detached:
-
-   a. Unix based system
-
-   ```sh
-      nohup python3 manage.py runserver > django-server.log 2>&1 &
+   ```env
+   DJANGO_DB_NAME=PujoAtlasDb
+   DJANGO_DB_USER=PujoAtlasDb_owner
+   DJANGO_DB_PASSWORD=I1*******0aC # contact in discord for actual password
+   DJANGO_DB_HOST=ep-tight-frost-a1w3l3i2.ap-southeast-1.aws.neon.tech
+   DJANGO_DB_PORT=5432
+   DJANGO_DB_SYNC_MODE=dev
+   SSL_MODE=true
    ```
 
-   b. Windows based system
+4. **Run Setup Script**:
+   Depending on your operating system, run the appropriate setup script to install dependencies and start the development server.
 
-   ```sh
-      task run_server
-   ```
-
-4. Run the cron job detached:
-
-   a. Unix based system
-
-   ```sh
-      nohup node node-cron/index.js &
-   ```
-
-   b. Windows based system
-
-   ```sh
-      task run_scheduler
-   ```
-
-### Validate Application Status
-
-a. Django Server
-
-```sh
-   localhost:3000/swagger
-```
-
-b. node cron job
-
-```sh
-   localhost:4000/health
-```
-
-### Manual Setup (Optional)
-
-If you want to perform each step manually, follow these commands:
-
-1. **Check Prerequisites** (as described in the prerequisites section above).
-
-2. **Start Docker Services**:
-
-   ```sh
-   docker-compose up -d
-   ```
-
-3. **Create a Virtual Environment**:
-
-   ```sh
-   python -m venv venv
-   ```
-
-4. **Activate the Virtual Environment**:
-
-   - On Windows:
-
-     ```sh
-     venv\Scripts\activate
+   ### For Unix/Linux/macOS Users:
+   - Make the `setup.sh` script executable:
+     ```bash
+     chmod +x setup.sh
+     ```
+   - Run the setup script:
+     ```bash
+     ./setup.sh
      ```
 
-   - On Linux/macOS:
-
-     ```sh
-     source venv/bin/activate
+   ### For Windows Users:
+   - Run the PowerShell script:
+     ```powershell
+     ./setup.ps1
      ```
 
-5. **Install Python Dependencies**:
+## What This Setup Will Do:
+- The setup script will check for the Node.js version (must be 20 or higher).
+- It will install the NestJS CLI globally if it isn't already installed.
+- It checks for the existence of the `.env.development` file and ensures the necessary environment variables are set.
+- It installs the required dependencies (`npm install`) and starts the NestJS development server (`npm run start:dev`).
 
-   ```sh
-   pip install -r requirements.txt
-   ```
+## Notes
+- Ensure you have the correct permissions to run scripts on your machine.
+- If you encounter any issues during the setup process, verify that Node.js version 20 or higher is installed and that your `.env.development` file contains the correct values.
 
-6. **Run Database Migrations**:
 
-   ```sh
-   python manage.py migrate
-   ```
 
-7. **Run Django Server**:
+### Key Elements of the README:
+1. **Prerequisites**: Clearly state the required Node.js version.
+2. **Setup Instructions**: Include all steps for cloning, checking out to the correct branch, and setting up environment variables.
+3. **Platform-Specific Setup**: Instructions for Unix-based systems and Windows, including the necessary commands for making the script executable and running it.
+4. **What the Script Does**: Describes the process that will be automated by the script.
+5. **Best Practice**: Ensure the user sets up the `.env.development` correctly and provides instructions in an easily readable format.
 
-   ```sh
-   python manage.py runserver
-   ```
-
-8. **Set Up `node-cron`**:
-
-   ```sh
-   cd node-cron
-   npm install
-   nohup node index.js &
-   ```
-
-   This will install the Node.js dependencies and start the cron job in the background.
-
-## Running the Project
-
-To run the server, use the following command
-
-```sh
-task run_server
-```
-
-- To check if the backend is running properly, you can access it on the designated URL (e.g., `http://localhost:3000` for Django).
-- To stop the Docker services:
-
-  ```sh
-  docker-compose down
-  ```
-
-## Stop the Project
-
-To stop the server, use the following command:
-
-```sh
-task stop_server
-```
-
-## Troubleshooting
-
-- **Docker Not Running**: Ensure Docker is running before starting the setup.
-- **Virtual Environment Issues**: If you encounter issues activating the virtual environment, make sure you are using the correct command for your OS.
-- **Port Conflicts**: If any port conflicts occur, make sure no other services are running on the required ports.
-
-## Contributing
-
-We 💖 contributors! Feel free to contribute to this project but **please read the [Contributing Guidelines](CONTRIBUTING.md) before opening an issue or PR** so you understand the branching strategy. We also welcome you to join our [Discord](https://discord.com/invite/xxSXWYf6d4) community for either support or contributing guidance.
-
-![Alt](https://repobeats.axiom.co/api/embed/e21736ab847e9d6aaf62bbd15061f5793f087dff.svg "Repobeats analytics image")
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Sponsors
-
-A special thank you to **Netlify**, **Cloudflare**, and **Sentry** for sponsoring **Pujo Atlas**!
-
-<div>
-   <a href="https://www.netlify.com" target="_blank" rel="noopener noreferrer"><img src="https://www.netlify.com/v3/img/components/netlify-color-accent.svg" alt="Deploys by Netlify" /></a>
-   <a href="https://www.cloudflare.com" target="_blank" rel="noopener noreferrer"><img src="https://cf-assets.www.cloudflare.com/slt3lc6tev37/CHOl0sUhrumCxOXfRotGt/081f81d52274080b2d026fdf163e3009/cloudflare-icon-color_3x.png" alt="Cloudflare Badge" height="50px" width="100px" /></a>
-   <a href="https://www.sentry.io" target="_blank" rel="noopener noreferrer"><img src="https://avatars.githubusercontent.com/u/1396951?v=4" alt="Cloudflare Badge" height="50px" width="50px" /></a>
-</div>
+This `README.md` should provide all necessary information for users to successfully set up and run the development server on any supported operating system.
