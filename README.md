@@ -1,9 +1,10 @@
 
 # PujoAtlasKol-Backend
-
+<figure markdown>
 <img src="public/file-type-node.svg" height="50px" width="50px" alt="Node Icon"/>
 <img src="public/file-type-typescript-official.svg" height="50px" width="50px" alt="TS Icon"/>
 <img src="https://nestjs.com/img/logo-small.svg" width="50px" height="50px" alt="Nest Logo" />
+</figure>
           
 Welcome to Pujo Atlas - your ultimate guide for Pandal Hopping during Durga Puja in Kolkata! This open-source project aims to provide a comprehensive and user-friendly webapp that lists all the Durga Pujas happening around Kolkata and offers a host of features to make your pandal hopping experience seamless and enjoyable.
 
