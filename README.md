@@ -1,12 +1,8 @@
 
 # PujoAtlasKol-Backend
-<p>
+<p align="left">
 <img src="public/file-type-node.svg" height="50px" width="50px" alt="Node Icon"/>
-</p>
-<p>
 <img src="public/file-type-typescript-official.svg" height="50px" width="50px" alt="TS Icon"/>
-</p>
-<p>
 <img src="https://nestjs.com/img/logo-small.svg" width="50px" height="50px" alt="Nest Logo" />
 </p>
           
